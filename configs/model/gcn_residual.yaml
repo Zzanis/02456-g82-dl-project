@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn_residual
+
+init:
+  _target_: models.GCNResidual
+  _partial_: false
+  num_node_features: 11

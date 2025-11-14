@@ -1,0 +1,19 @@
+Loaded dependency [python3/3.10.12]: sqlite3/3.42.0
+Loaded module: python3/3.10.12
+
+Loading python3/3.10.12
+  Loading requirement: sqlite3/3.42.0
+Loaded module: gcc/13.3.0-binutils-2.42
+In 'run.yaml': Could not find 'model/graph_sage'
+
+Available options in 'model':
+	gcn
+	gcn_residual
+	gcn_residual_dropout
+	sage
+Config search path:
+	provider=hydra, path=pkg://hydra.conf
+	provider=main, path=file:///zhome/3d/c/222266/gnn_intro/configs
+	provider=schema, path=structured://
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

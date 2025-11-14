@@ -1,0 +1,67 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@hpc.dtu.dk>
+Subject: Job 26954643: <run_GCN> in cluster <dcc> Exited
+
+Job <run_GCN> was submitted from host <n-62-30-1> by user <s252263> in cluster <dcc> at Thu Nov 13 15:32:39 2025
+Job was executed on host(s) <8*n-62-20-13>, in queue <gpuv100>, as user <s252263> in cluster <dcc> at Thu Nov 13 16:09:43 2025
+</zhome/3d/c/222266> was used as the home directory.
+</zhome/3d/c/222266/gnn_intro> was used as the working directory.
+Started at Thu Nov 13 16:09:43 2025
+Terminated at Thu Nov 13 16:09:54 2025
+Results reported at Thu Nov 13 16:09:54 2025
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/bash
+#BSUB -q gpuv100
+#BSUB -J run_GCN
+#BSUB -n 8
+#BSUB -R "rusage[mem=32000]"
+#BSUB -M 32000
+# GPU & placement
+#BSUB -R "select[gpu]"
+#BSUB -R "span[hosts=1]"
+#BSUB -gpu "num=1"
+# Time & logs
+#BSUB -W 08:00
+#BSUB -o /zhome/3d/c/222266/gnn_intro/hpc_logs/gcn_%J.out
+#BSUB -e /zhome/3d/c/222266/gnn_intro/hpc_logs/gcn_%J.err
+
+set -euo pipefail
+
+module purge
+module load python3/3.10.12
+module load gcc
+source "/zhome/3d/c/222266/ComputationalTools/AmazonReview/.venv/bin/activate"
+
+python3 src/run.py logger.name=graph_sage trainer=semi-supervised-ensemble model=graph_sage 
+
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   2.91 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     256000.00 MB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   11 sec.
+    Turnaround time :                            2235 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </zhome/3d/c/222266/gnn_intro/hpc_logs/gcn_26954643.err> for stderr output of this job.
+

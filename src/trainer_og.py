@@ -14,7 +14,6 @@ class SemiSupervisedEnsemble:
         models,
         logger,
         datamodule,
-        use_amp
     ):
         self.device = device
         self.models = models
@@ -33,10 +32,6 @@ class SemiSupervisedEnsemble:
         # Logging
         self.logger = logger
 
-        # AMP setup
-        self.amp_enabled = (device.type == "cuda") and use_amp
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.amp_enabled)
-
     def validate(self):
         for model in self.models:
             model.eval()
@@ -44,16 +39,15 @@ class SemiSupervisedEnsemble:
         val_losses = []
         
         with torch.no_grad():
-            with torch.cuda.amp.autocast(enabled=(self.device.type == "cuda")):
-                for x, targets in self.val_dataloader:
-                    x, targets = x.to(self.device), targets.to(self.device)
-                    
-                    # Ensemble prediction
-                    preds = [model(x) for model in self.models]
-                    avg_preds = torch.stack(preds).mean(0)
-                    
-                    val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
-                    val_losses.append(val_loss.item())
+            for x, targets in self.val_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+                
+                # Ensemble prediction
+                preds = [model(x) for model in self.models]
+                avg_preds = torch.stack(preds).mean(0)
+                
+                val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+                val_losses.append(val_loss.item())
         val_loss = np.mean(val_losses)
         return {"val_MSE": val_loss}
 
@@ -65,25 +59,14 @@ class SemiSupervisedEnsemble:
             supervised_losses_logged = []
             for x, targets in self.train_dataloader:
                 x, targets = x.to(self.device), targets.to(self.device)
-                self.optimizer.zero_grad(set)
+                self.optimizer.zero_grad()
                 # Supervised loss
-                with torch.cuda.amp.autocast(enabled=self.amp_enabled):
-                    supervised_losses = [
-                        self.supervised_criterion(model(x), targets) for model in self.models
-                        ]
-                    supervised_loss = sum(supervised_losses)
-
-                #supervised_losses = [self.supervised_criterion(model(x), targets) for model in self.models]
-                #supervised_loss = sum(supervised_losses)
-
+                supervised_losses = [self.supervised_criterion(model(x), targets) for model in self.models]
+                supervised_loss = sum(supervised_losses)
                 supervised_losses_logged.append(supervised_loss.detach().item() / len(self.models))  # type: ignore
-                self.scaler.scale(supervised_loss).backward()
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
-
-                #loss = supervised_loss
-                #loss.backward()  # type: ignore
-                #self.optimizer.step()
+                loss = supervised_loss
+                loss.backward()  # type: ignore
+                self.optimizer.step()
             self.scheduler.step()
             supervised_losses_logged = np.mean(supervised_losses_logged)
 

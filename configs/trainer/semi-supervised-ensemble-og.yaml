@@ -17,10 +17,7 @@ init:
     lr: 0.001
     weight_decay: 0.005
   scheduler:
-    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    T_max: ${trainer.train.total_epochs}   
-    eta_min: 1e-6
-  use_amp: true
-
-    
+    step_size: 1
+    gamma: 0.975

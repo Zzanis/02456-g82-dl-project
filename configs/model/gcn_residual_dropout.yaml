@@ -1,0 +1,9 @@
+defaults:
+  - _self_
+
+name: gcn_residual_dropout
+
+init:
+  _target_: models.GCNResidualDropout
+  _partial_: false
+  num_node_features: 11
