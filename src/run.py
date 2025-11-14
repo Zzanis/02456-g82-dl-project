@@ -1,4 +1,3 @@
-
 from itertools import chain
 import hydra
 import torch
@@ -13,31 +12,46 @@ from utils import seed_everything
     version_base=None,
 )
 def main(cfg):
-    # print out the full config
+    # Print the full configuration for transparency
     print(OmegaConf.to_yaml(cfg))
 
+    # Select device (GPU or CPU)
     if cfg.device in ["unset", "auto"]:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.backends.mps.is_available():
+            device = torch.device("mps")  # Use Apple Silicon GPU
+        elif torch.cuda.is_available():
+            device = torch.device("cuda")  # Use NVIDIA GPU (on HPC)
+        else:
+            device = torch.device("cpu")
     else:
         device = torch.device(cfg.device)
 
+    # Set random seeds for reproducibility
     seed_everything(cfg.seed, cfg.force_deterministic)
 
+    # Initialize the experiment logger (e.g., Weights & Biases)
     logger = hydra.utils.instantiate(cfg.logger)
     hparams = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     logger.init_run(hparams)
 
+    # Load the dataset (QM9 molecular data)
     dm = hydra.utils.instantiate(cfg.dataset.init)
 
+    # Create the model (GNN) and move it to the selected device
     model = hydra.utils.instantiate(cfg.model.init).to(device)
 
+    # Optionally compile the model for faster execution
     if cfg.compile_model:
         model = torch.compile(model)
     models = [model]
+    
+    # Initialize the trainer with model, logger, data, and device
     trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
 
+    # Train the model and collect results
     results = trainer.train(**cfg.trainer.train)
-    results = torch.Tensor(results)
+    if results is not None:
+        results = torch.Tensor(results)
 
 
 
