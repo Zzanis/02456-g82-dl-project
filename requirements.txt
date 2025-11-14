@@ -1,0 +1,11 @@
+# Quick install: pip install -r requirements.txt
+# For HPC with GPU support, load CUDA module first (e.g., module load cuda/12.1)
+
+torch>=2.0.0
+numpy>=1.24.0
+torch-geometric>=2.3.0
+pytorch-lightning>=2.0.0
+hydra-core>=1.3.0
+omegaconf>=2.3.0
+wandb>=0.15.0
+tqdm>=4.65.0
