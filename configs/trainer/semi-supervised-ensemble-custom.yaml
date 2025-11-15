@@ -1,0 +1,37 @@
+defaults:
+  - _self_
+
+method: semi-supervised-ensemble
+
+train:
+  total_epochs: 250
+  validation_interval: 10
+
+
+init:
+  _target_: trainer.SemiSupervisedEnsemble  # your SchNet trainer class
+  # model:
+  #   _target_: models.SchNetModel
+  #   hidden_channels: 128
+  #   num_filters: 128
+  #   num_interactions: 6
+  #   num_gaussians: 50
+  #   cutoff: 10.0
+
+  supervised_criterion:
+    _target_: torch.nn.MSELoss      # MAE loss for QM9
+
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.0003
+    weight_decay: 0.0001
+
+  scheduler:
+    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _partial_: true
+    T_max: 250
+    eta_min: 1e-5
+
+# Optional: other trainer parameters can go here
+# e.g., wandb logging, mixed precision, early stopping

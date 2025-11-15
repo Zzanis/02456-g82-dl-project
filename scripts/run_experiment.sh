@@ -10,18 +10,18 @@
 
 # Load required modules (adjust for your HPC system)
 module purge
-module load python/3.11
+module load python/3.10.12
 module load cuda/12.1
 
 # Activate virtual environment
-source /path/to/02456-g82-dl-project/.venv/bin/activate
+source ~/my_venv/bin/activate
 
 # Set WandB mode (use offline if compute nodes don't have internet)
 # export WANDB_MODE=offline
 # export WANDB_DIR=$HOME/wandb_logs
 
 # Change to project directory
-cd /path/to/02456-g82-dl-project
+cd ~/02456-g82-dl-project/
 
 # Print configuration info
 echo "================================"

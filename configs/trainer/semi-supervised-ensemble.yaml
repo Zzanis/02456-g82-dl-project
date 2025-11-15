@@ -4,7 +4,7 @@ defaults:
 method: semi-supervised-ensemble
 
 train:
-  total_epochs: 250
+  total_epochs: 350
   validation_interval: 10
 
 init:
@@ -14,12 +14,12 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.001
-    weight_decay: 0.005
+    lr: 0.0003
+    weight_decay: 0.0001
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
-    step_size: 1
-    gamma: 0.975
+    step_size: 10
+    gamma: 0.9
 
     
