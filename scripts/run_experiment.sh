@@ -15,15 +15,21 @@ module load python3/3.13.8
 module load cuda/12.1
 
 # Activate virtual environment
+echo "Activating virtual environment..."
 source /zhome/c5/9/156511/DL-project/.venv/bin/activate
+echo "Virtual environment activated"
+echo "Python location: $(which python3)"
+echo "Python version: $(python3 --version)"
 
-# Set WandB mode (use offline if compute nodes don't have internet)
-export WANDB_MODE=offline
+# Set WandB mode (try online mode - will fall back to offline if no internet)
+export WANDB_MODE=online
 export WANDB_DIR=/zhome/c5/9/156511/DL-project/02456-g82-dl-project/logs/wandb_logs
 
+echo "WandB mode: $WANDB_MODE"
 
 # Change to project directory
 cd /zhome/c5/9/156511/DL-project/02456-g82-dl-project
+echo "Working directory: $(pwd)"
 
 # If this is a job array, map LSB_JOBINDEX to learning rate
 if [ ! -z "$LSB_JOBINDEX" ]; then
@@ -38,7 +44,10 @@ else
 fi
 
 # Run experiment with any command-line arguments passed to this script
+echo "Starting training with args: $EXTRA_ARGS $@"
 python src/run.py $EXTRA_ARGS "$@"
+EXIT_CODE=$?
+echo "Training finished with exit code: $EXIT_CODE"
 
 
 # Sync WandB logs if using offline mode
