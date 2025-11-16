@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /model: miglec-gcn-graphconv
+  - override /optimizer: adamw
+
+optimizer:
+  init:
+    lr: 0.01
