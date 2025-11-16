@@ -29,6 +29,7 @@ RUN_DIR=/zhome/2b/a/223921/runs/gnn_intro
 python=python3.13
 
 module load python3/3.13.5
+module load cuda/12.8.0
 
 source $REPO/.venv/bin/activate
 source /zhome/2b/a/223921/.dl-project-config
