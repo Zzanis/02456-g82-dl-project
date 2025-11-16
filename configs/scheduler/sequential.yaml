@@ -1,0 +1,15 @@
+defaults:
+  - base_scheduler
+
+sequential: true
+schedulers:
+  - _target_: torch.optim.lr_scheduler.LinearLR
+    start_factor: 0.1
+    total_iters: 20
+  - _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    T_max: 80
+    eta_min: 3e-5
+
+init:
+  _target_: torch.optim.lr_scheduler.SequentialLR
+  milestones: [20]

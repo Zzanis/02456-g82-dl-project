@@ -1,0 +1,10 @@
+defaults:
+  - _self_
+
+name: gcn-lc
+
+init:
+  _target_: models.gcn.GCN_LC
+  _partial_: false
+  num_node_features: 11
+  hidden_channels: 128

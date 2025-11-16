@@ -1,4 +1,3 @@
-from itertools import chain
 import hydra
 import torch
 from omegaconf import OmegaConf
@@ -39,14 +38,38 @@ def main(cfg):
 
     # Create the model (GNN) and move it to the selected device
     model = hydra.utils.instantiate(cfg.model.init).to(device)
+    print(f"arch: {model}")
+    # logger.log("architecture", model)
 
     # Optionally compile the model for faster execution
     if cfg.compile_model:
         model = torch.compile(model)
     models = [model]
-    
-    # Initialize the trainer with model, logger, data, and device
-    trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
+
+    # Setup optimizer and scheduler here to avoid dealing with nested partials
+    # in case of nested schedulers
+    all_params = [p for m in models for p in m.parameters()]
+    optimizer = hydra.utils.instantiate(cfg.optimizer.init, params=all_params)
+    # Deal with nested schedulers that require optimizer as 1st positional arg
+    if cfg.scheduler.sequential:
+        schedulers = [
+            hydra.utils.instantiate(scfg, optimizer)
+            for scfg in cfg.scheduler.schedulers
+        ]
+        scheduler = hydra.utils.instantiate(cfg.scheduler.init, optimizer, schedulers)
+    else:
+        scheduler = hydra.utils.instantiate(cfg.scheduler.init, optimizer)
+
+    # Initialize the trainer
+    trainer = hydra.utils.instantiate(
+        cfg.trainer.init,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        device=device,
+        models=models,
+        datamodule=dm,
+        logger=logger,
+    )
 
     # Train the model and collect results
     results = trainer.train(**cfg.trainer.train)

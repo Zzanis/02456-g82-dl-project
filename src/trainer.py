@@ -1,5 +1,3 @@
-from functools import partial
-
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -12,17 +10,14 @@ class SemiSupervisedEnsemble:
         scheduler,
         device,
         models,
-        logger,
         datamodule,
+        logger,
     ):
+        self.supervised_criterion = supervised_criterion
+        self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = device
         self.models = models
-
-        # Optim related things
-        self.supervised_criterion = supervised_criterion
-        all_params = [p for m in self.models for p in m.parameters()]
-        self.optimizer = optimizer(params=all_params)
-        self.scheduler = scheduler(optimizer=self.optimizer)
 
         # Dataloader setup
         self.train_dataloader = datamodule.train_dataloader()

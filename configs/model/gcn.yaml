@@ -4,6 +4,13 @@ defaults:
 name: gcn
 
 init:
-  _target_: models.GCN
+  _target_: models.gcn.GCN
   _partial_: false
   num_node_features: 11
+  hidden_channels: 128
+  dropout: 0
+  dropout_final: 0
+  use_residual: false
+  norm_layer_type:
+    _target_: models.gcn.NormLayerType
+    value: "batch"
