@@ -24,8 +24,8 @@
 # python3 helloworld.py > joboutput_$LSB_JOBID.out 2>&1
 
 
-REPO=/zhome/2b/a/223921/projects/gnn_intro
-RUN_DIR=/zhome/2b/a/223921/runs/gnn_intro
+REPO=/zhome/2b/a/223921/projects/02456-g82-dl-project
+RUN_DIR=/zhome/2b/a/223921/runs/02456-g82-dl-project
 python=python3.13
 
 module load python3/3.13.5
