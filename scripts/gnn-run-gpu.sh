@@ -4,8 +4,8 @@
 #BSUB -R "rusage[mem=5GB]"
 #BSUB -B
 #BSUB -N
-#BSUB -o /zhome/2b/a/223921/runs/gnn_intro/Output_%J.out
-#BSUB -e /zhome/2b/a/223921/runs/gnn_intro/Output_%J.err
+#BSUB -o /zhome/2b/a/223921/runs/02456-g82-dl-project/Output_%J.out
+#BSUB -e /zhome/2b/a/223921/runs/02456-g82-dl-project/Output_%J.err
 #BSUB -W 2:00 
 # Need to specify at least 4 cores when using GPU queue
 #BSUB -n 4
