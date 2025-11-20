@@ -36,15 +36,16 @@ def main(cfg):
     # Load the dataset (QM9 molecular data)
     dm = hydra.utils.instantiate(cfg.dataset.init)
 
-    # Create the model (GNN) and move it to the selected device
-    model = hydra.utils.instantiate(cfg.model.init).to(device)
-    print(f"arch: {model}")
-    # logger.log("architecture", model)
+    models = []
+    for model_init in cfg.model.init:
+        model = hydra.utils.instantiate(model_init).to(device)
+        print(f"arch: {model}")
+        # logger.log("architecture", model)
 
-    # Optionally compile the model for faster execution
-    if cfg.compile_model:
-        model = torch.compile(model)
-    models = [model]
+        # Optionally compile the model for faster execution
+        if cfg.compile_model:
+            model = torch.compile(model)
+        models.append(model)
 
     # Setup optimizer and scheduler here to avoid dealing with nested partials
     # in case of nested schedulers

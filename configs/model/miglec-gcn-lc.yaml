@@ -4,7 +4,7 @@ defaults:
 name: miglec-gcn-lc
 
 init:
-  _target_: models.miglec.GCN_LC
-  _partial_: false
-  num_node_features: 11
-  hidden_channels: 128
+  - _target_: models.miglec.GCN_LC
+    _partial_: false
+    num_node_features: 11
+    hidden_channels: 128
