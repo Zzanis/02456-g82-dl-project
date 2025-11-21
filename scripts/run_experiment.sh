@@ -32,7 +32,7 @@ if [ ! -z "$LSB_JOBINDEX" ]; then
     # Get learning rate for this job index 
     LR=${LR_VALUES[$((LSB_JOBINDEX))]}
     echo "Job array index: $LSB_JOBINDEX, Using learning rate: $LR"
-    EXTRA_ARGS="trainer.init.optimizer.lr=$LR"
+    EXTRA_ARGS="optimizer.init.lr=$LR"
 else
     EXTRA_ARGS=""
 fi

@@ -28,12 +28,12 @@ Template for submitting jobs to the HPC cluster.
 sbatch scripts/run_experiment.sh
 
 # With custom parameters
-sbatch scripts/run_experiment.sh trainer.init.optimizer.lr=0.001
+sbatch scripts/run_experiment.sh optimizer.init.lr=0.001
 
 # Multiple parameters
 sbatch scripts/run_experiment.sh \
-    trainer.init.optimizer.lr=0.001 \
-    model.init.hidden_channels=128 \
+    optimizer.init.lr=0.001 \
+    model.init.0.hidden_channels=128 \
     seed=42
 ```
 
@@ -58,7 +58,7 @@ HIDDEN_VALUES=(32 64 128 256)
 
 for hidden in "${HIDDEN_VALUES[@]}"; do
     sbatch scripts/run_experiment.sh \
-        model.init.hidden_channels=$hidden
+        model.init.0.hidden_channels=$hidden
 done
 ```
 

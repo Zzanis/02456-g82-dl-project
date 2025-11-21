@@ -10,27 +10,44 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
 ```
 02456-g82-dl-project/
 │
-├── configs/                    # Configuration files (YAML)
-│   ├── run.yaml               # Main config that ties everything together
+├── configs/                      # Configuration files (YAML)
 │   ├── dataset/
-│   │   └── qm9.yaml           # Dataset configuration
-│   ├── model/
-│   │   └── gcn.yaml           # Model architecture configuration
-│   ├── trainer/
-│   │   └── semi-supervised-ensemble.yaml  # Training configuration
-│   └── logger/
-│       └── wandb.yaml         # Logging configuration
-│
-└── src/                        # Source code
-    ├── run.py                 # Main entry point
-    ├── models.py              # Model architectures (GCN, etc.)
-    ├── trainer.py             # Training loop logic
-    ├── qm9.py                 # Dataset loading and preparation
-    ├── qm9_utils.py           # Dataset utilities
-    ├── logger.py              # Experiment logging
-    ├── utils.py               # General utilities
-    ├── model_utils.py         # Model setup utilities
-    └── dataset_utils.py       # Dataset utilities
+│   │   └── qm9.yaml              # Dataset configuration
+│   ├── experiment/               # Holds experiment configurations
+│   │   ├── my-experiment.yaml    # Specific experiment configuration
+│   │   └── ...
+│   ├── logger/                   # Holds logger configurations
+│   │   └── wandb.yaml            # Specific logger configuration
+│   ├── model/                    # Holds model architecture configurations
+│   │   ├── gcn.yaml              # Configuration of specific model or model ensemble
+│   │   └── ...
+│   ├── optimizer/                # Holds optimizer configurations
+│   │   ├── adamw.yaml            # Specific optimizer configuration
+│   │   └── sgd.yaml
+│   ├── run.yaml                  # Main config that ties everything together
+│   ├── scheduler/                # Holds scheduler configurations
+│   │   ├── base_scheduler.yaml   # Base configuration for all the schedulers
+│   │   ├── sequential.yaml       # Specific scheduler configuration
+│   │   └── ...
+│   └── trainer/                  # Holds training configurations
+│       ├── n-cps.yaml            # Configuration of specific trainer
+│       └── ...
+│─ scripts/                       # Holds utility scripts for running the project
+│   └── ...
+└── src/                          # Source code
+    ├── dataset_utils.py          # Dataset utilities
+    ├── logger.py
+    ├── models/                   # Holds different model architectures (GCN, etc.)
+    │   ├── initial.py            # Original model architecture
+    │   └── ...
+    ├── model_utils.py            # Model setup utilities
+    ├── qm9.py                    # Dataset loading and preparation
+    ├── qm9_utils.py              # Dataset utilities
+    ├── run.py                    # Main entry point
+    ├── trainers/                 # Holds different trainers
+    │   ├── ncps.py               # Specific trainer
+    │   └── ...
+    └── utils.py
 ```
 
 ---
@@ -42,8 +59,8 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
 2. Uses **`utils.py`** to set random seeds
 3. Instantiates **`logger.py`** (WandB) to track experiments
 4. Instantiates **`qm9.py`** (data module) to load and split data
-5. Instantiates **`models.py`** (GNN model)
-6. Instantiates **`trainer.py`** (training loop)
+5. Instantiates configured model(s) from **`models`** package (for example, `models/initial.py#GCN`)
+6. Instantiates configured trainer from **`trainers`** package (training loop)
 7. Calls `trainer.train()` which uses the data module and logs metrics
 
 ### Configuration Flow:
@@ -68,13 +85,13 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
 
 ---
 
-### 2. `src/models.py` - Model Architectures
+### 2. `src/models/` - Model Architectures organized into separate files
 **What it does**: Defines neural network architectures.
 
-**Current model**: `GCN` (Graph Convolutional Network)
+**Current default model**: is defined in `run.yaml` defaults list, under `model`. For `modelxyz` in `run.yaml`, look up the `__target__` in corresponding `configs/model/modelxyz.yaml` (currently that resolves to `models.initial.GCN`).
 
 **To add a new model**:
-1. Add a new class in `models.py`:
+1. Add a new file under `models` folder, for example `my-new-arch.py`:
    ```python
    class MyNewGNN(torch.nn.Module):
        def __init__(self, num_node_features, hidden_channels=64):
@@ -91,7 +108,7 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
    name: mynewgnn
    
    init:
-     _target_: models.MyNewGNN
+     _target_: models.my-new-arch.MyNewGNN
      num_node_features: 11
      hidden_channels: 128
    ```
@@ -100,16 +117,16 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
 
 ---
 
-### 3. `src/trainer.py` - Training Loop
-**What it does**: Handles training and validation logic.
+### 3. `src/trainers/` - Trainer methods organized into separate files
+**What it does**: Defined different ways for handling training and validation logic.
 
-**Current trainer**: `SemiSupervisedEnsemble`
+**Current default trainer**: is defined in `run.yaml` defaults list, under `trainer`. For `trainerxyz` in `run.yaml`, look up the `__target__` in corresponding `trainer/trainerxyz.yaml` (currently that resolves to `trainers.supervised.SupervisedEnsemble`).
 
 **Key methods**:
 - `train()`: Main training loop
 - `validate()`: Computes validation metrics (MSE)
 
-**To modify training logic**: Edit this file (e.g., add new loss functions, change optimization strategy).
+**To modify training logic**: Edit one of the files in this directory (e.g., modify how loss is calculated, change optimization strategy), or create a new one.
 
 ---
 
@@ -158,19 +175,56 @@ This project uses **Graph Neural Networks (GNNs)** to predict molecular properti
 
 ## Where to Make Changes
 
+These steps described here are for making changes to the default parameters for each of the component type and architecture/method, and should at the end contain the current optimized version of the parameters. Only commit these changes if they have been determined as current optimal settings. Otherwise use experiments (see sections below) or revert the changes before comitting to the repository.
+
 ### To Change Hyperparameters:
 
-#### **Learning Rate, Optimizer, Scheduler**:
-Edit `configs/trainer/semi-supervised-ensemble.yaml`:
+#### **Optimizer**:
+Edit `configs/run.yaml` to select different type of optimizer:
 ```yaml
-optimizer:
-  lr: 0.001          # Change this
-  weight_decay: 0.005
-
-scheduler:
-  step_size: 1
-  gamma: 0.975       # Change this
+defaults:
+  - dataset: qm9
+  - trainer: supervised-ensemble
+  - optimizer: adamw  # Change this
+  - scheduler: step
+  - logger: wandb
+  - model: gcn
+  - _self_
 ```
+
+#### **Learning Rate**:
+Edit learning rate of the chosen optimizer in its config, for example `configs/optimizer/adamw.yaml`:
+```yaml
+init:
+  _target_: torch.optim.AdamW
+  lr: 0.001  # Change this
+  weight_decay: 0.005
+```
+
+#### **Scheduler**:
+Edit `configs/run.yaml` to select different type of scheduler:
+```yaml
+defaults:
+  - dataset: qm9
+  - trainer: supervised-ensemble
+  - optimizer: adamw
+  - scheduler: step  # Change this
+  - logger: wandb
+  - model: gcn
+  - _self_
+```
+
+Edit parameters of a specific scheduler in its config, for example `configs/scheduler/step.yaml`:
+```yaml
+defaults:
+  - base_scheduler
+
+init:
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 1
+  gamma: 0.975  # Change this
+```
+
 
 #### **Batch Size, Data Splits**:
 Edit `configs/dataset/qm9.yaml`:
@@ -187,7 +241,7 @@ init:
   hidden_channels: 64     # Change this (or add more parameters)
 ```
 
-Then update `src/models.py` to accept the new parameters:
+Then update the model (for example, `src/models/initial.py`) to accept the new parameters:
 ```python
 class GCN(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=64, num_layers=2):
@@ -198,8 +252,8 @@ class GCN(torch.nn.Module):
 
 ### To Create a More Advanced GNN:
 
-#### **Option 1: Modify Existing Model**
-Edit `src/models.py` to add:
+#### **Option 1: Modify Existing Models package**
+Edit the model package (for example, `src/models/initial.py`) to add a new model and:
 - More layers
 - Different GNN layers (GAT, GraphSAGE, GIN)
 - Dropout, batch normalization
@@ -208,6 +262,11 @@ Edit `src/models.py` to add:
 Example:
 ```python
 from torch_geometric.nn import GATConv, GINConv, global_add_pool
+
+# ...
+# Existing models in the file, e.g.
+# class GCN(torch.nn.Module):
+# ...
 
 class AdvancedGNN(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=64, num_layers=3, dropout=0.1):
@@ -262,7 +321,7 @@ python src/run.py
 python src/run.py model=gcn
 
 # Change hyperparameters
-python src/run.py trainer.init.optimizer.lr=0.01
+python src/run.py optimizer.init.lr=0.01
 
 # Change target property
 python src/run.py dataset.target=5
@@ -271,7 +330,7 @@ python src/run.py dataset.target=5
 python src/run.py trainer.train.total_epochs=500
 
 # Multiple overrides
-python src/run.py model=gcn trainer.init.optimizer.lr=0.001 dataset.batch_size_train=128
+python src/run.py model=gcn optimizer.init.lr=0.001 dataset.batch_size_train=128
 ```
 
 ---
@@ -281,9 +340,9 @@ python src/run.py model=gcn trainer.init.optimizer.lr=0.001 dataset.batch_size_t
 ### Manual Tuning:
 Run multiple experiments with different settings:
 ```bash
-python src/run.py trainer.init.optimizer.lr=0.001
-python src/run.py trainer.init.optimizer.lr=0.01
-python src/run.py trainer.init.optimizer.lr=0.1
+python src/run.py optimizer.init.lr=0.001
+python src/run.py optimizer.init.lr=0.01
+python src/run.py optimizer.init.lr=0.1
 ```
 
 ### Automated Tuning (WandB Sweeps):
@@ -295,10 +354,10 @@ python src/run.py trainer.init.optimizer.lr=0.1
      name: val_MSE
      goal: minimize
    parameters:
-     trainer.init.optimizer.lr:
+     optimizer.init.lr:
        min: 0.0001
        max: 0.1
-     model.init.hidden_channels:
+     model.init.0.hidden_channels:
        values: [32, 64, 128, 256]
    ```
 
@@ -316,7 +375,7 @@ python src/run.py trainer.init.optimizer.lr=0.1
 
 ## Tips for Improving Performance
 
-### 1. **Architecture Changes** (in `src/models.py`):
+### 1. **Architecture Changes** (in `src/models/`):
 - Add more layers
 - Use different GNN types (GAT, GIN, GraphSAGE)
 - Add skip connections
@@ -335,7 +394,7 @@ python src/run.py trainer.init.optimizer.lr=0.1
 - Use different molecular features
 - Try different batch sizes
 
-### 4. **Regularization** (in `src/models.py` or config):
+### 4. **Regularization** (in `src/models/` or config):
 - Add dropout
 - Increase weight decay
 - Use early stopping
@@ -365,9 +424,9 @@ python src/run.py trainer.init.optimizer.lr=0.1
 
 **To change hyperparameters**: Edit YAML files in `configs/`
 
-**To create new models**: Edit `src/models.py` and create new config
+**To create new models**: Edit files in `src/models/` and create new config
 
-**To modify training**: Edit `src/trainer.py`
+**To modify training**: Edit files in `src/trainers/`
 
 **To track experiments**: Use Weights & Biases dashboard
 
