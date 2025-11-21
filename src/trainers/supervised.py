@@ -1,10 +1,9 @@
-from functools import partial
-
 import numpy as np
 import torch
 from tqdm import tqdm
 
-class SemiSupervisedEnsemble:
+
+class SupervisedEnsemble:
     def __init__(
         self,
         supervised_criterion,
@@ -12,17 +11,14 @@ class SemiSupervisedEnsemble:
         scheduler,
         device,
         models,
-        logger,
         datamodule,
+        logger,
     ):
+        self.supervised_criterion = supervised_criterion
+        self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = device
         self.models = models
-
-        # Optim related things
-        self.supervised_criterion = supervised_criterion
-        all_params = [p for m in self.models for p in m.parameters()]
-        self.optimizer = optimizer(params=all_params)
-        self.scheduler = scheduler(optimizer=self.optimizer)
 
         # Dataloader setup
         self.train_dataloader = datamodule.train_dataloader()
@@ -37,22 +33,22 @@ class SemiSupervisedEnsemble:
             model.eval()
 
         val_losses = []
-        
+
         with torch.no_grad():
             for x, targets in self.val_dataloader:
                 x, targets = x.to(self.device), targets.to(self.device)
-                
+
                 # Ensemble prediction
                 preds = [model(x) for model in self.models]
                 avg_preds = torch.stack(preds).mean(0)
-                
+
                 val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
                 val_losses.append(val_loss.item())
         val_loss = np.mean(val_losses)
         return {"val_MSE": val_loss}
 
     def train(self, total_epochs, validation_interval):
-        #self.logger.log_dict()
+        # self.logger.log_dict()
         for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
             for model in self.models:
                 model.train()
@@ -61,7 +57,10 @@ class SemiSupervisedEnsemble:
                 x, targets = x.to(self.device), targets.to(self.device)
                 self.optimizer.zero_grad()
                 # Supervised loss
-                supervised_losses = [self.supervised_criterion(model(x), targets) for model in self.models]
+                supervised_losses = [
+                    self.supervised_criterion(model(x), targets)
+                    for model in self.models
+                ]
                 supervised_loss = sum(supervised_losses)
                 supervised_losses_logged.append(supervised_loss.detach().item() / len(self.models))  # type: ignore
                 loss = supervised_loss

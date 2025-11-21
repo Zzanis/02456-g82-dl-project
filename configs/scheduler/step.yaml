@@ -1,0 +1,7 @@
+defaults:
+  - base_scheduler
+
+init:
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 1
+  gamma: 0.975

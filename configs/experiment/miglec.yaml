@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - override /model: miglec-gcn-graphconv
+  - override /optimizer: adamw
+
+optimizer:
+  init:
+    lr: 0.01
+
+# TODO migcer: remove
+# logger:
+#   entity: miglec-n-a
+#   project_name: semi-supervised-ensembles
