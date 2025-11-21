@@ -1,6 +1,6 @@
 defaults:
   - dataset: qm9
-  - trainer: semi-supervised-ensemble  # options: self-supervised, supervised
+  - trainer: supervised-ensemble  # options: supervised-ensemble, n-cps
   - optimizer: adamw
   - scheduler: step
   - logger: wandb

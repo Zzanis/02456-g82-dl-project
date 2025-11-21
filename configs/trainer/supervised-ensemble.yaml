@@ -1,14 +1,14 @@
 defaults:
   - _self_
 
-method: semi-supervised-ensemble
+method: supervised-ensemble
 
 train:
   total_epochs: 250
   validation_interval: 10
 
 init:
-  _target_: trainers.trainer.SemiSupervisedEnsemble
+  _target_: trainers.supervised.SupervisedEnsemble
   supervised_criterion:
     _target_: torch.nn.MSELoss
     
