@@ -9,6 +9,6 @@ optimizer:
     lr: 0.01
 
 # TODO migcer: remove
-logger:
-  entity: miglec-n-a
-  project_name: semi-supervised-ensembles
+# logger:
+#   entity: miglec-n-a
+#   project_name: semi-supervised-ensembles

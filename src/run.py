@@ -78,6 +78,5 @@ def main(cfg):
         results = torch.Tensor(results)
 
 
-
 if __name__ == "__main__":
     main()

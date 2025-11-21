@@ -10,16 +10,16 @@ from torch_geometric.nn.conv import GraphConv
 
 class NormLayerType(StrEnum):
     """Normalisation layer types with associated constructors"""
-    
+
     BATCH = "batch"
     LAYER = "layer"
     NONE = "none"
-    
+
     def __new__(cls, value: str) -> "NormLayerType":
         obj = str.__new__(cls, value)
         obj._value_ = value
         return obj
-    
+
     @property
     def new(self) -> Type[torch.nn.Module]:
         """Return the constructor for this layer type"""
@@ -70,7 +70,7 @@ class GCN(torch.nn.Module):
         dropout: float = 0,
         dropout_final: float = 0,
         use_residual: bool = False,
-        norm_layer_type: NormLayerType=NormLayerType.NONE,
+        norm_layer_type: NormLayerType = NormLayerType.NONE,
     ):
         super(GCN, self).__init__()
         self.p_dropout = dropout
@@ -95,7 +95,6 @@ class GCN(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Linear(hidden_channels, 1),
         )
-
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -144,7 +143,7 @@ class GCN_GraphConv(torch.nn.Module):
         dropout: float = 0,
         dropout_final: float = 0,
         use_residual: bool = False,
-        norm_layer_type: NormLayerType=NormLayerType.NONE,
+        norm_layer_type: NormLayerType = NormLayerType.NONE,
     ):
         super(GCN_GraphConv, self).__init__()
         self.p_dropout = dropout
@@ -169,7 +168,6 @@ class GCN_GraphConv(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Linear(hidden_channels, 1),
         )
-
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch

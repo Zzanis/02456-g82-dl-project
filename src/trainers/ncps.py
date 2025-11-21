@@ -22,7 +22,9 @@ class NCrossPseudoSupervision:
         self.device = device
         self.models = models
         if len(models) < 2:
-          raise ValueError(f"At least two models are required. Models supplied: {len(models)}")
+            raise ValueError(
+                f"At least two models are required. Models supplied: {len(models)}"
+            )
 
         # Dataloader setup
         self.train_labeled_dataloader = datamodule.train_dataloader()
@@ -64,10 +66,6 @@ class NCrossPseudoSupervision:
             for (x, targets), (x_unlabeled, _) in zip(
                 self.train_labeled_dataloader, self.train_unlabeled_dataloader
             ):
-                # TODO migcer: remove logging
-                # print(f"x: {x}")
-                # print(f"targets: {targets.shape}")
-                # print(f"x_unlabeled: {x_unlabeled}")
                 x = x.to(self.device)
                 targets = targets.to(self.device)
                 x_unlabeled = x_unlabeled.to(self.device)
@@ -97,35 +95,28 @@ class NCrossPseudoSupervision:
                 cps_labeled_loss_per_model = []
                 cps_unlabeled_loss_per_model = []
                 for i in range(len(self.models)):
-                    labeled_loss_vs_others = []
-                    unlabeled_loss_vs_others = []
-                    for j in set(range(len(self.models))) - {i}:
-                        # print(f"Evaluating CPS losses for (i,j) = ({i},{j})")
-                        labeled_loss_vs_others.append(
+                    model_cps_labeled_loss = torch.stack(
+                        [
                             self.supervised_criterion(
                                 preds_labeled[i], preds_labeled_no_grad[j]
                             )
-                        )
-                        unlabeled_loss_vs_others.append(
+                            for j in set(range(len(self.models))) - {i}
+                        ]
+                    ).mean()
+                    model_cps_unlabeled_loss = torch.stack(
+                        [
                             self.supervised_criterion(
                                 preds_unlabeled[i], preds_unlabeled_no_grad[j]
                             )
-                        )
-                    model_cps_labeled_loss = torch.stack(labeled_loss_vs_others).mean()
-                    model_cps_unlabeled_loss = torch.stack(unlabeled_loss_vs_others).mean()
-                    # print(f"cps_labeled_loss for model {i}: {model_cps_labeled_loss}")
-                    # print(
-                    #     f"cps_unlabeled_loss for model {i}: {model_cps_unlabeled_loss}"
-                    # )
+                            for j in set(range(len(self.models))) - {i}
+                        ]
+                    ).mean()
                     cps_labeled_loss_per_model.append(model_cps_labeled_loss)
                     cps_unlabeled_loss_per_model.append(model_cps_unlabeled_loss)
                 cps_labeled_loss = torch.stack(cps_labeled_loss_per_model).mean()
                 cps_unlabeled_loss = torch.stack(cps_unlabeled_loss_per_model).mean()
                 cps_loss = cps_labeled_loss + cps_unlabeled_loss
                 cps_losses_logged.append(cps_loss.detach().item())  # type: ignore
-                # print(f"cls_labeled_loss: {cps_labeled_loss:.4f}")
-                # print(f"cls_unlabeled_loss: {cps_unlabeled_loss:.4f}")
-                # print(f"cps_loss: {cps_loss:.4f}")
 
                 # Total loss
                 loss = supervised_loss + self.cps_loss_weight * cps_loss
