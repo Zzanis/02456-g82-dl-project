@@ -2,6 +2,7 @@ defaults:
   - _self_
 
 method: semi-supervised-ensemble
+num_models: 5  # Number of models in the ensemble
 
 train:
   total_epochs: 250
