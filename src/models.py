@@ -38,7 +38,6 @@ class advanced_GCN(torch.nn.Module):
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
         self.conv4 = GCNConv(hidden_channels, hidden_channels)
         self.conv5 = GCNConv(hidden_channels, hidden_channels)
-        self.conv6 = GCNConv(hidden_channels, hidden_channels)
         
         # Projection layer for first residual connection (input dim != hidden dim)
         # This matches dimensions so we can add them: x (11 dims) + conv_out (64 dims) won't work
@@ -52,7 +51,6 @@ class advanced_GCN(torch.nn.Module):
         self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
         self.bn4 = torch.nn.BatchNorm1d(hidden_channels)
         self.bn5 = torch.nn.BatchNorm1d(hidden_channels)
-        self.bn6 = torch.nn.BatchNorm1d(hidden_channels)
         
         # Optional: Layer normalization (alternative to batch norm)
         # More stable for small batches or varying graph sizes
@@ -141,7 +139,6 @@ class advanced_GCN(torch.nn.Module):
         x = self.conv5(x, edge_index)
         x = self.bn5(x) if not self.use_layer_norm else self.ln5(x, batch)
         x = F.relu(x)
-        x = self.dropout(x)
         if self.use_residual:
             x = x + identity  # RESIDUAL CONNECTION!
 
@@ -255,4 +252,104 @@ class GraphSAGE(torch.nn.Module):
         # Pooling & Output
         x = global_mean_pool(x, batch)
         x = self.linear(x)
+        return x
+
+
+#-------------- Improved Advanced GCN ---------------
+class improved_advanced_GCN(torch.nn.Module):
+    """
+    Improved version of advanced_GCN that fixes architectural issues:
+    - Reduced depth (4 layers instead of 6)
+    - Increased width (default 128 channels)
+    - Selective dropout application
+    - Better head architecture
+    - No custom initialization (uses PyTorch defaults with batch norm)
+    """
+    def __init__(self, num_node_features, hidden_channels=128, dropout=0.2, use_layer_norm=False, use_residual=True):
+        super(improved_advanced_GCN, self).__init__()
+        
+        # Reduced to 4 layers (better for molecular graphs)
+        self.conv1 = GCNConv(num_node_features, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.conv4 = GCNConv(hidden_channels, hidden_channels)
+        
+        # Projection layer for first residual connection
+        self.input_proj = torch.nn.Linear(num_node_features, hidden_channels, bias=False)
+        
+        # Batch normalization
+        self.bn1 = torch.nn.BatchNorm1d(hidden_channels)
+        self.bn2 = torch.nn.BatchNorm1d(hidden_channels)
+        self.bn3 = torch.nn.BatchNorm1d(hidden_channels)
+        self.bn4 = torch.nn.BatchNorm1d(hidden_channels)
+        
+        # Optional: Layer normalization
+        self.use_layer_norm = use_layer_norm
+        if use_layer_norm:
+            from torch_geometric.nn import LayerNorm
+            self.ln1 = LayerNorm(hidden_channels)
+            self.ln2 = LayerNorm(hidden_channels)
+            self.ln3 = LayerNorm(hidden_channels)
+            self.ln4 = LayerNorm(hidden_channels)
+        
+        # Dropout - will be applied selectively
+        self.dropout = torch.nn.Dropout(dropout)
+        self.use_residual = use_residual
+        
+        # Improved head with intermediate layer
+        self.pre_linear = torch.nn.Linear(hidden_channels, hidden_channels // 2)
+        self.final_bn = torch.nn.BatchNorm1d(hidden_channels // 2)
+        self.linear = torch.nn.Linear(hidden_channels // 2, 1)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        
+        # Store original input for first residual connection
+        x_input = self.input_proj(x) if self.use_residual else None
+
+        # Layer 1: Conv -> Norm -> Activation -> (Selective Dropout)
+        identity = x_input
+        x = self.conv1(x, edge_index)
+        x = self.bn1(x) if not self.use_layer_norm else self.ln1(x, batch)
+        x = F.relu(x)
+        # Skip dropout on first layer for better gradient flow
+        if self.use_residual:
+            x = x + identity
+
+        # Layer 2: Full regularization
+        identity = x
+        x = self.conv2(x, edge_index)
+        x = self.bn2(x) if not self.use_layer_norm else self.ln2(x, batch)
+        x = F.relu(x)
+        x = self.dropout(x)
+        if self.use_residual:
+            x = x + identity
+
+        # Layer 3: Full regularization
+        identity = x
+        x = self.conv3(x, edge_index)
+        x = self.bn3(x) if not self.use_layer_norm else self.ln3(x, batch)
+        x = F.relu(x)
+        x = self.dropout(x)
+        if self.use_residual:
+            x = x + identity
+
+        # Layer 4: Final conv layer (skip dropout before pooling)
+        identity = x
+        x = self.conv4(x, edge_index)
+        x = self.bn4(x) if not self.use_layer_norm else self.ln4(x, batch)
+        x = F.relu(x)
+        if self.use_residual:
+            x = x + identity
+
+        # Readout: aggregate node features to graph-level
+        x = global_mean_pool(x, batch)
+        
+        # Improved prediction head
+        x = self.pre_linear(x)
+        x = self.final_bn(x)
+        x = F.relu(x)
+        x = self.dropout(x)  # Dropout before final layer
+        x = self.linear(x)
+
         return x

@@ -2,6 +2,7 @@ from functools import partial
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 
 class SemiSupervisedEnsemble:
@@ -113,4 +114,254 @@ class SemiSupervisedEnsemble:
                             model.load_state_dict(state)
                         print("Restored best model weights")
                     break
+            self.logger.log_dict(summary_dict, step=epoch)
+
+
+class SemiSupervisedCPS:
+    """
+    Semi-Supervised Cross Pseudo Supervision (CPS) Trainer.
+    
+    Implements the CPS method for graph-level regression tasks.
+    Two networks with identical architecture train jointly:
+    - Network A produces pseudo labels → supervises Network B
+    - Network B produces pseudo labels → supervises Network A
+    
+    For regression: pseudo labels are the raw predictions (not argmax).
+    """
+    def __init__(
+        self,
+        supervised_criterion,
+        cps_criterion,
+        optimizer,
+        scheduler,
+        device,
+        models,
+        logger,
+        datamodule,
+        lambda_cps=1.0,
+        patience=20,
+        min_delta=0.001,
+    ):
+        """
+        Args:
+            supervised_criterion: Loss for labeled data (e.g., MSELoss)
+            cps_criterion: Loss for CPS pseudo-label supervision (e.g., MSELoss)
+            optimizer: Optimizer factory (partial)
+            scheduler: Scheduler factory (partial)
+            device: Device to run on
+            models: List of exactly 2 models with same architecture
+            logger: Logger instance
+            datamodule: Data module with train/val/test loaders
+            lambda_cps: Weight for CPS loss (default: 1.0)
+            patience: Early stopping patience
+            min_delta: Minimum improvement for early stopping
+        """
+        assert len(models) == 2, "CPS requires exactly 2 models"
+        
+        self.device = device
+        self.model1, self.model2 = models
+        
+        # Loss functions
+        self.supervised_criterion = supervised_criterion
+        self.cps_criterion = cps_criterion
+        self.lambda_cps = lambda_cps
+        
+        # Optimizers (separate for each network)
+        all_params = [p for m in models for p in m.parameters()]
+        self.optimizer = optimizer(params=all_params)
+        self.scheduler = scheduler(optimizer=self.optimizer)
+        
+        # Dataloaders
+        self.train_labeled_loader = datamodule.train_dataloader()
+        self.train_unlabeled_loader = datamodule.unsupervised_train_dataloader()
+        self.val_dataloader = datamodule.val_dataloader()
+        self.test_dataloader = datamodule.test_dataloader()
+        
+        # Logging
+        self.logger = logger
+        
+        # Early stopping
+        self.patience = patience
+        self.min_delta = min_delta
+        self.best_val_loss = float('inf')
+        self.patience_counter = 0
+        self.best_models_state = None
+
+    def validate(self):
+        """Validation using ensemble average of both networks."""
+        self.model1.eval()
+        self.model2.eval()
+        
+        val_losses = []
+        
+        with torch.no_grad():
+            for x, targets in self.val_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+                
+                # Ensemble prediction
+                pred1 = self.model1(x)
+                pred2 = self.model2(x)
+                avg_pred = (pred1 + pred2) / 2.0
+                
+                # Reshape targets to match predictions if needed
+                if targets.dim() == 1:
+                    targets = targets.unsqueeze(1)
+                
+                val_loss = F.mse_loss(avg_pred, targets)
+                val_losses.append(val_loss.item())
+        
+        val_loss = np.mean(val_losses)
+        return {"val_MSE": val_loss}
+
+    def compute_cps_loss(self, pred1, pred2):
+        """
+        Compute Cross Pseudo Supervision loss.
+        
+        For regression:
+        - Each network's prediction serves as pseudo label for the other
+        - Use L1 or L2 distance between predictions
+        
+        Args:
+            pred1: Predictions from model 1
+            pred2: Predictions from model 2
+            
+        Returns:
+            CPS loss (scalar)
+        """
+        # Model 1 pseudo-labels supervise Model 2
+        # Model 2 pseudo-labels supervise Model 1
+        # Use detach to stop gradients flowing through pseudo labels
+        loss_1_to_2 = self.cps_criterion(pred1, pred2.detach())
+        loss_2_to_1 = self.cps_criterion(pred2, pred1.detach())
+        
+        return loss_1_to_2 + loss_2_to_1
+
+    def train(self, total_epochs, validation_interval):
+        """Main training loop with CPS."""
+        
+        for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
+            self.model1.train()
+            self.model2.train()
+            
+            # Metrics tracking
+            supervised_losses_log = []
+            cps_labeled_losses_log = []
+            cps_unlabeled_losses_log = []
+            total_losses_log = []
+            
+            # Create unlabeled iterator (will cycle through it)
+            unlabeled_iter = iter(self.train_unlabeled_loader)
+            
+            # Iterate based on LABELED data (like original trainer)
+            # Sample unlabeled batches as needed
+            for x_labeled, y_labeled in self.train_labeled_loader:
+                self.optimizer.zero_grad()
+                
+                total_loss = 0.0
+                supervised_loss = 0.0
+                cps_labeled_loss = 0.0
+                cps_unlabeled_loss = 0.0
+                
+                # ===== LABELED DATA =====
+                x_labeled = x_labeled.to(self.device)
+                y_labeled = y_labeled.to(self.device)
+                
+                # Reshape targets if needed
+                if y_labeled.dim() == 1:
+                    y_labeled = y_labeled.unsqueeze(1)
+                
+                # Forward pass both networks on labeled data
+                pred1_labeled = self.model1(x_labeled)
+                pred2_labeled = self.model2(x_labeled)
+                
+                # Supervised loss (both networks)
+                supervised_loss = (
+                    self.supervised_criterion(pred1_labeled, y_labeled) +
+                    self.supervised_criterion(pred2_labeled, y_labeled)
+                )
+                total_loss += supervised_loss
+                
+                # CPS loss on labeled data (optional but helps)
+                cps_labeled_loss = self.compute_cps_loss(pred1_labeled, pred2_labeled)
+                total_loss += self.lambda_cps * cps_labeled_loss
+                
+                # ===== UNLABELED DATA =====
+                # Get one batch of unlabeled data
+                try:
+                    x_unlabeled, _ = next(unlabeled_iter)
+                except StopIteration:
+                    # Restart unlabeled iterator if exhausted
+                    unlabeled_iter = iter(self.train_unlabeled_loader)
+                    x_unlabeled, _ = next(unlabeled_iter)
+                
+                x_unlabeled = x_unlabeled.to(self.device)
+                
+                # Forward pass both networks on unlabeled data
+                pred1_unlabeled = self.model1(x_unlabeled)
+                pred2_unlabeled = self.model2(x_unlabeled)
+                
+                # CPS loss on unlabeled data (main semi-supervised signal)
+                cps_unlabeled_loss = self.compute_cps_loss(pred1_unlabeled, pred2_unlabeled)
+                total_loss += self.lambda_cps * cps_unlabeled_loss
+                
+                # Backward pass
+                total_loss.backward()
+                
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(self.model1.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(self.model2.parameters(), max_norm=1.0)
+                
+                self.optimizer.step()
+                
+                # Log metrics
+                supervised_losses_log.append(supervised_loss.item())
+                cps_labeled_losses_log.append(cps_labeled_loss.item())
+                cps_unlabeled_losses_log.append(cps_unlabeled_loss.item())
+                total_losses_log.append(total_loss.item())
+            
+            # Step scheduler
+            self.scheduler.step()
+            
+            # Compute average losses
+            summary_dict = {
+                "supervised_loss": np.mean(supervised_losses_log),
+                "cps_labeled_loss": np.mean(cps_labeled_losses_log),
+                "cps_unlabeled_loss": np.mean(cps_unlabeled_losses_log),
+                "total_loss": np.mean(total_losses_log),
+                "learning_rate": self.optimizer.param_groups[0]['lr'],
+            }
+            
+            # Validation
+            if epoch % validation_interval == 0 or epoch == total_epochs:
+                val_metrics = self.validate()
+                summary_dict.update(val_metrics)
+                pbar.set_postfix(summary_dict)
+                
+                # Early stopping check
+                current_val_loss = val_metrics["val_MSE"]
+                if current_val_loss < self.best_val_loss - self.min_delta:
+                    # Improvement detected
+                    self.best_val_loss = current_val_loss
+                    self.patience_counter = 0
+                    # Save best model states
+                    self.best_models_state = [
+                        self.model1.state_dict(),
+                        self.model2.state_dict()
+                    ]
+                    summary_dict["early_stop_best"] = True
+                else:
+                    # No improvement
+                    self.patience_counter += 1
+                    summary_dict["early_stop_patience"] = self.patience_counter
+                
+                # Check if patience exceeded
+                if self.patience_counter >= self.patience:
+                    print(f"\nEarly stopping triggered at epoch {epoch}. Best val_MSE: {self.best_val_loss:.4f}")
+                    # Restore best model weights
+                    if self.best_models_state is not None:
+                        self.model1.load_state_dict(self.best_models_state[0])
+                        self.model2.load_state_dict(self.best_models_state[1])
+                        print("Restored best model weights")
+                    break
+            
             self.logger.log_dict(summary_dict, step=epoch)
