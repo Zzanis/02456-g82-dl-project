@@ -64,7 +64,6 @@ class advanced_GCN(torch.nn.Module):
             self.ln3 = LayerNorm(hidden_channels)
             self.ln4 = LayerNorm(hidden_channels)
             self.ln5 = LayerNorm(hidden_channels)
-            self.ln6 = LayerNorm(hidden_channels)
         
         # Dropout (randomly sets neurons to 0 during training)
         # Prevents overfitting by forcing network to learn redundant representations
@@ -75,6 +74,25 @@ class advanced_GCN(torch.nn.Module):
         
         # Final prediction layer 
         self.linear = torch.nn.Linear(hidden_channels, 1)
+
+        # Kaiming He initialization (for ReLU activations)
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize weights using Kaiming He initialization for ReLU networks."""
+        # Initialize linear layers with Kaiming He
+        torch.nn.init.kaiming_normal_(self.input_proj.weight, mode='fan_in', nonlinearity='relu')
+        torch.nn.init.kaiming_normal_(self.linear.weight, mode='fan_in', nonlinearity='relu')
+        if self.linear.bias is not None:
+            torch.nn.init.zeros_(self.linear.bias)
+        
+        # GCNConv layers - initialize their internal linear layers
+        for conv in [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6]:
+            if hasattr(conv, 'lin'):
+                torch.nn.init.kaiming_normal_(conv.lin.weight, mode='fan_in', nonlinearity='relu')
+                if conv.lin.bias is not None:
+                    torch.nn.init.zeros_(conv.lin.bias)
+
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -127,13 +145,6 @@ class advanced_GCN(torch.nn.Module):
         if self.use_residual:
             x = x + identity  # RESIDUAL CONNECTION!
 
-        # Layer 6 (final conv layer)
-        identity = x
-        x = self.conv6(x, edge_index)
-        x = self.ln6(x, batch) if self.use_layer_norm else self.bn6(x)
-        x = F.relu(x)
-        if self.use_residual:
-            x = x + identity  # RESIDUAL CONNECTION!
 
         # Readout: aggregate node features to graph-level
         x = global_mean_pool(x, batch)

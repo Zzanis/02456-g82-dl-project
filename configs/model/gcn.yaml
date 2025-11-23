@@ -8,6 +8,6 @@ init:
   _partial_: false
   num_node_features: 11
   hidden_channels: 128
-  dropout: 0.2
+  dropout: 0.05
   use_layer_norm: true  # if false uses batch norm
   use_residual: true
