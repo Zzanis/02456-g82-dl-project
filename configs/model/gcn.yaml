@@ -4,6 +4,10 @@ defaults:
 name: gcn
 
 init:
-  _target_: models.GCNResidualDropout
+  _target_: models.advanced_GCN
   _partial_: false
   num_node_features: 11
+  hidden_channels: 128
+  dropout: 0.2
+  use_layer_norm: true  # if false uses batch norm
+  use_residual: true

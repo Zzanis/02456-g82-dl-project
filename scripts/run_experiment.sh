@@ -1,13 +1,13 @@
 #!/bin/bash
-#BSUB -J dl_project_lr               
+#BSUB -J advanced_gcn_ensemble_layernorm_gradientclipping_residual               
 #BSUB -q gpuv100                    
-#BSUB -W 00:30
+#BSUB -W 00:45
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"                      
-#BSUB -R "rusage[mem=5GB]"
+#BSUB -R "rusage[mem=2GB]"
 #BSUB -gpu "num=1:mode=exclusive_process"  
-#BSUB -o logs/learningrate_%J_%I.out          
-#BSUB -e logs/learningrate_%J_%I.err         
+#BSUB -o logs/advanced_gcn_ensemble_layernorm_gradientclipping_residual_%J_%I.out          
+#BSUB -e logs/advanced_gcn_ensemble_layernorm_gradientclipping_residual_%J_%I.err         
 
 # Load required modules (adjust for your HPC system)
 module purge
