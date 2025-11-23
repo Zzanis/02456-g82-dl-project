@@ -103,7 +103,7 @@ class advanced_GCN(torch.nn.Module):
         # Layer 1: Conv -> Norm -> Activation -> Dropout
         identity = x_input  # Save for residual
         x = self.conv1(x, edge_index)
-        x = self.ln1(x, batch) if self.use_layer_norm else self.bn1(x)
+        x = self.bn1(x) if not self.use_layer_norm else self.ln1(x, batch)
         x = F.relu(x)
         x = self.dropout(x)
         if self.use_residual:
@@ -112,7 +112,7 @@ class advanced_GCN(torch.nn.Module):
         # Layer 2
         identity = x  # Save current x
         x = self.conv2(x, edge_index)
-        x = self.ln2(x, batch) if self.use_layer_norm else self.bn2(x)
+        x = self.bn2(x) if not self.use_layer_norm else self.ln2(x, batch)
         x = F.relu(x)
         x = self.dropout(x)
         if self.use_residual:
@@ -121,7 +121,7 @@ class advanced_GCN(torch.nn.Module):
         # Layer 3
         identity = x
         x = self.conv3(x, edge_index)
-        x = self.ln3(x, batch) if self.use_layer_norm else self.bn3(x)
+        x = self.bn3(x) if not self.use_layer_norm else self.ln3(x, batch)
         x = F.relu(x)
         x = self.dropout(x)
         if self.use_residual:
@@ -130,7 +130,7 @@ class advanced_GCN(torch.nn.Module):
         # Layer 4
         identity = x
         x = self.conv4(x, edge_index)
-        x = self.ln4(x, batch) if self.use_layer_norm else self.bn4(x)
+        x = self.bn4(x) if not self.use_layer_norm else self.ln4(x, batch)
         x = F.relu(x)
         x = self.dropout(x)
         if self.use_residual:
@@ -139,7 +139,7 @@ class advanced_GCN(torch.nn.Module):
         # Layer 5
         identity = x
         x = self.conv5(x, edge_index)
-        x = self.ln5(x, batch) if self.use_layer_norm else self.bn5(x)
+        x = self.bn5(x) if not self.use_layer_norm else self.ln5(x, batch)
         x = F.relu(x)
         x = self.dropout(x)
         if self.use_residual:

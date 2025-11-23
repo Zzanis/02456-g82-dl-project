@@ -75,8 +75,9 @@ class SemiSupervisedEnsemble:
                 supervised_losses_logged.append(supervised_loss.detach().item() / len(self.models))  # type: ignore
                 loss = supervised_loss
                 loss.backward()  # type: ignore
-                # adding gradient clipping
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                # adding gradient clipping - fixed to clip all models in ensemble
+                for model in self.models:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 self.optimizer.step()
             self.scheduler.step()
             supervised_losses_logged = np.mean(supervised_losses_logged)
