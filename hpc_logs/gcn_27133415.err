@@ -1,0 +1,15 @@
+Loaded dependency [python3/3.10.12]: sqlite3/3.42.0
+Loaded module: python3/3.10.12
+
+Loading python3/3.10.12
+  Loading requirement: sqlite3/3.42.0
+Loaded module: gcc/13.3.0-binutils-2.42
+wandb: Currently logged in as: adopetr (adopetr-danmarks-tekniske-universitet-dtu) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run s99948aq
+wandb: Tracking run with wandb version 0.23.0
+wandb: Run data is saved locally in ./logs/wandb/run-20251122_181209-s99948aq
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run schnet_like_seed=0
+wandb: ⭐️ View project at https://wandb.ai/adopetr-danmarks-tekniske-universitet-dtu/semi-supervised-ensembles
+wandb: 🚀 View run at https://wandb.ai/adopetr-danmarks-tekniske-universitet-dtu/semi-supervised-ensembles/runs/s99948aq
+  0%|          | 0/10 [00:00<?, ?it/s] 10%|█         | 1/10 [00:03<00:30,  3.44s/it] 20%|██        | 2/10 [00:05<00:23,  2.89s/it] 30%|███       | 3/10 [00:08<00:19,  2.85s/it] 40%|████      | 4/10 [00:11<00:17,  2.87s/it] 40%|████      | 4/10 [00:15<00:17,  2.87s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 50%|█████     | 5/10 [00:15<00:15,  3.18s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 60%|██████    | 6/10 [00:18<00:11,  3.00s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 70%|███████   | 7/10 [00:21<00:09,  3.15s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 80%|████████  | 8/10 [00:23<00:05,  2.89s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 90%|█████████ | 9/10 [00:26<00:02,  2.72s/it, supervised_loss=0.113, unsupervised_loss=0, val_MSE=0.165] 90%|█████████ | 9/10 [00:29<00:02,  2.72s/it, supervised_loss=0.103, unsupervised_loss=0, val_MSE=0.171]100%|██████████| 10/10 [00:29<00:00,  2.78s/it, supervised_loss=0.103, unsupervised_loss=0, val_MSE=0.171]100%|██████████| 10/10 [00:29<00:00,  2.91s/it, supervised_loss=0.103, unsupervised_loss=0, val_MSE=0.171]

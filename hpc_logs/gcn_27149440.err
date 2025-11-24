@@ -1,0 +1,20 @@
+Loaded dependency [python3/3.10.12]: sqlite3/3.42.0
+Loaded module: python3/3.10.12
+
+Loading python3/3.10.12
+  Loading requirement: sqlite3/3.42.0
+Loaded module: gcc/13.3.0-binutils-2.42
+wandb: Currently logged in as: adopetr (adopetr-danmarks-tekniske-universitet-dtu) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run z8o1rcdy
+wandb: Tracking run with wandb version 0.23.0
+wandb: Run data is saved locally in ./logs/wandb/run-20251123_210520-z8o1rcdy
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run schnet_like_seed=0
+wandb: ⭐️ View project at https://wandb.ai/adopetr-danmarks-tekniske-universitet-dtu/semi-supervised-ensembles
+wandb: 🚀 View run at https://wandb.ai/adopetr-danmarks-tekniske-universitet-dtu/semi-supervised-ensembles/runs/z8o1rcdy
+Error executing job with overrides: ['trainer=semi-supervised-ensemble-custom', 'model=schnet_model']
+Error in call to target 'models.SchNetLikeModel':
+AttributeError("module 'torch.nn' has no attribute 'GraphNorm'")
+full_key: model.init
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
