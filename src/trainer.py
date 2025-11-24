@@ -85,6 +85,7 @@ class SemiSupervisedEnsemble:
 
             summary_dict = {
                 "supervised_loss": supervised_losses_logged,
+                "learning_rate": self.optimizer.param_groups[0]['lr'],  
             }
             if epoch % validation_interval == 0 or epoch == total_epochs:
                 val_metrics = self.validate()

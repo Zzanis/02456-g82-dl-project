@@ -11,3 +11,4 @@ init:
   dropout: 0.05
   use_layer_norm: false  # if false uses batch norm
   use_residual: true
+  use_kaiming_init: false  # Set to true to enable Kaiming He initialization (default PyTorch init often works better)

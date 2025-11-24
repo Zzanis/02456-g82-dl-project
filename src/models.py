@@ -29,7 +29,7 @@ class GCN(torch.nn.Module):
     
 #-------------- Advanced GCN with Regularization ---------------
 class advanced_GCN(torch.nn.Module):
-    def __init__(self, num_node_features, hidden_channels=64, dropout=0.3, use_layer_norm=False, use_residual=True):
+    def __init__(self, num_node_features, hidden_channels=128, dropout=0.05, use_layer_norm=False, use_residual=True, use_kaiming_init=False):
         super(advanced_GCN, self).__init__()  # Fixed: was super(GCN, ...)
         
         # Graph convolution layers
@@ -73,8 +73,10 @@ class advanced_GCN(torch.nn.Module):
         # Final prediction layer 
         self.linear = torch.nn.Linear(hidden_channels, 1)
 
-        # Kaiming He initialization (for ReLU activations)
-        self._init_weights()
+        # Optional: Kaiming He initialization (for ReLU activations)
+        # Set to False to use PyTorch's default initialization
+        if use_kaiming_init:
+            self._init_weights()
     
     def _init_weights(self):
         """Initialize weights using Kaiming He initialization for ReLU networks."""
@@ -85,7 +87,7 @@ class advanced_GCN(torch.nn.Module):
             torch.nn.init.zeros_(self.linear.bias)
         
         # GCNConv layers - initialize their internal linear layers
-        for conv in [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6]:
+        for conv in [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5]:
             if hasattr(conv, 'lin'):
                 torch.nn.init.kaiming_normal_(conv.lin.weight, mode='fan_in', nonlinearity='relu')
                 if conv.lin.bias is not None:

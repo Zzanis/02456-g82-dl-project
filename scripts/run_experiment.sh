@@ -1,13 +1,13 @@
 #!/bin/bash
-#BSUB -J advanced_gcn_residual_init               
+#BSUB -J simpler_advanced_GCN               
 #BSUB -q gpuv100                    
 #BSUB -W 00:15
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"                      
 #BSUB -R "rusage[mem=2GB]"
 #BSUB -gpu "num=1:mode=exclusive_process"  
-#BSUB -o logs/advanced_gcn_residual_init_%J_%I.out          
-#BSUB -e logs/advanced_gcn_residual_init_%J_%I.err         
+#BSUB -o logs/simpler_advanced_GCN_%J_%I.out          
+#BSUB -e logs/simpler_advanced_GCN_%J_%I.err         
 
 # Load required modules (adjust for your HPC system)
 module purge
@@ -31,17 +31,18 @@ echo "WandB mode: $WANDB_MODE"
 cd /zhome/c5/9/156511/DL-project/02456-g82-dl-project
 echo "Working directory: $(pwd)"
 
+# Always use ensemble trainer
+#EXTRA_ARGS="trainer=semi-supervised-ensemble"
+
 # If this is a job array, map LSB_JOBINDEX to learning rate
-if [ ! -z "$LSB_JOBINDEX" ]; then
+#if [ ! -z "$LSB_JOBINDEX" ]; then
     # Define learning rates array (must match submit_lr_sweep.sh)
-    LR_VALUES=(0.0001 0.0005 0.001 0.005 0.01)
+    #LR_VALUES=(0.0001 0.0005 0.001 0.005 0.01)
     # Get learning rate for this job index 
-    LR=${LR_VALUES[$((LSB_JOBINDEX))]}
-    echo "Job array index: $LSB_JOBINDEX, Using learning rate: $LR"
-    EXTRA_ARGS="trainer.init.optimizer.lr=$LR"
-else
-    EXTRA_ARGS=""
-fi
+    #LR=${LR_VALUES[$((LSB_JOBINDEX))]}
+    #echo "Job array index: $LSB_JOBINDEX, Using learning rate: $LR"
+    #EXTRA_ARGS="$EXTRA_ARGS trainer.init.optimizer.lr=$LR"
+#fi
 
 # Run experiment with any command-line arguments passed to this script
 echo "Starting training with args: $EXTRA_ARGS $@"

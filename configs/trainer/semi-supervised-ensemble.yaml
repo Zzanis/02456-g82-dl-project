@@ -2,7 +2,7 @@ defaults:
   - _self_
 
 method: semi-supervised-ensemble
-num_models: 1  # Number of models in the ensemble
+num_models: 3  # Number of models in the ensemble
 
 train:
   total_epochs: 250
@@ -15,8 +15,8 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.001
-    weight_decay: 0.005
+    lr: 0.01
+    weight_decay: 0.01
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
