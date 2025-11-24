@@ -1,6 +1,6 @@
 defaults:
   - dataset: qm9
-  - trainer: semi-supervised-ensemble  # options: self-supervised, supervised
+  - trainer: semi-supervised-cps  # options: self-supervised, supervised
   - logger: wandb
   - model: gcn
   - _self_

@@ -37,13 +37,19 @@ def main(cfg):
     # Load the dataset (QM9 molecular data)
     dm = hydra.utils.instantiate(cfg.dataset.init)
 
-    # Create the model (GNN) and move it to the selected device
-    model = hydra.utils.instantiate(cfg.model.init).to(device)
+    # Create ensemble of models
+    num_models = cfg.trainer.num_models
+    models = []
 
-    # Optionally compile the model for faster execution
-    if cfg.compile_model:
-        model = torch.compile(model)
-    models = [model]
+    for i in range(num_models):
+        # Create the model (GNN) and move it to the selected device
+        gnn_model = hydra.utils.instantiate(cfg.model.init).to(device)
+
+        # Optionally compile the model for faster execution
+        if cfg.compile_model:
+            gnn_model = torch.compile(gnn_model)
+
+        models.append(gnn_model)
     
     # Initialize the trainer with model, logger, data, and device
     trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
