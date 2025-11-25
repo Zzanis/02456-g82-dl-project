@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool, SAGEConv
+from torch_geometric.nn import GCNConv, global_mean_pool, SAGEConv, global_add_pool
 
 
 #-------------- Basic GCN ---------------
@@ -61,11 +61,12 @@ class GCNResBlock(torch.nn.Module):
     
 #-------------- GCN with Residual Blocks ---------------
 class GCNResidual(torch.nn.Module):
-    def __init__(self, num_node_features, hidden_channels=128):
+    def __init__(self, num_node_features, hidden_channels=256):
         super().__init__()
         self.block1 = GCNResBlock(num_node_features, hidden_channels, p_drop=0.0)
         self.block2 = GCNResBlock(hidden_channels, hidden_channels, p_drop=0.0)
         self.block3 = GCNResBlock(hidden_channels, hidden_channels, p_drop=0.0)
+        self.block4 = GCNResBlock(hidden_channels, hidden_channels, p_drop=0.0)
         self.linear = torch.nn.Linear(hidden_channels, 1)
 
     def forward(self, data):
@@ -74,7 +75,9 @@ class GCNResidual(torch.nn.Module):
         x = self.block1(x, edge_index)
         x = self.block2(x, edge_index)
         x = self.block3(x, edge_index)
+        x = self.block4(x, edge_index)
 
+        #x = global_add_pool(x, batch)
         x = global_mean_pool(x, batch)
         x = self.linear(x)
         return x
@@ -139,3 +142,49 @@ class GraphSAGE(torch.nn.Module):
         x = global_mean_pool(x, batch)
         x = self.linear(x)
         return x
+    
+#-------------- GraphSAGE with Residual Blocks ---------------
+class SAGEResBlock(torch.nn.Module):
+    def __init__(self, in_channels, out_channels, p_drop=0.0):
+        super().__init__()
+        self.conv = SAGEConv(in_channels, out_channels)
+        self.bn = torch.nn.BatchNorm1d(out_channels)
+        self.relu = torch.nn.ReLU()
+        self.drop = torch.nn.Dropout(p_drop)
+
+        # falls Dimensionen unterschiedlich sind:
+        self.res_connection = None
+        if in_channels != out_channels:
+            self.res_connection = torch.nn.Linear(in_channels, out_channels)
+
+    def forward(self, x, edge_index):
+        identity = x
+
+        out = self.conv(x, edge_index)
+        out = self.bn(out)
+        out = self.relu(out)
+        out = self.drop(out)
+
+        if self.res_connection is not None:
+            identity = self.res_connection(identity)
+
+        return out + identity
+    
+class SAGEResidual(torch.nn.Module):
+    def __init__(self, num_node_features, hidden_channels=256):
+        super().__init__()
+        self.block1 = SAGEResBlock(num_node_features, hidden_channels)
+        self.block2 = SAGEResBlock(hidden_channels, hidden_channels)
+        self.block3 = SAGEResBlock(hidden_channels, hidden_channels)
+        self.block4 = SAGEResBlock(hidden_channels, hidden_channels)
+        self.lin = torch.nn.Linear(hidden_channels, 1)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        x = self.block1(x, edge_index)
+        x = self.block2(x, edge_index)
+        x = self.block3(x, edge_index)
+        x = self.block4(x, edge_index)
+        x = global_mean_pool(x, batch)
+        return self.lin(x)

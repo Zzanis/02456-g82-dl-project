@@ -1,17 +1,17 @@
 #!/bin/bash
-#BSUB -q gpuv100
+#BSUB -q gpua40
 #BSUB -J run_sage
 #BSUB -n 8
-#BSUB -R "rusage[mem=32000]"
-#BSUB -M 32000
+#BSUB -R "rusage[mem=24000]"
+#BSUB -M 24000
 # GPU & placement
 #BSUB -R "select[gpu]"
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1"
 # Time & logs
-#BSUB -W 08:00
-#BSUB -o /zhome/3d/c/222266/gnn_intro/hpc_logs/gcn_%J.out
-#BSUB -e /zhome/3d/c/222266/gnn_intro/hpc_logs/gcn_%J.err
+#BSUB -W 01:00
+#BSUB -o /zhome/3d/c/222266/02456-g82-dl-project/hpc_logs/gcn_%J.out
+#BSUB -e /zhome/3d/c/222266/02456-g82-dl-project/hpc_logs/gcn_%J.err
 
 set -euo pipefail
 
@@ -22,4 +22,9 @@ source "/zhome/3d/c/222266/ComputationalTools/AmazonReview/.venv/bin/activate"
 
 #python3 src/run.py logger.name=sage trainer=semi-supervised-ensemble model=sage 
 
-python3 src/run.py logger.name=gcn_residual_lr0.005_wd0.002 trainer=semi-supervised-ensemble model=gcn_residual trainer.init.optimizer.lr=0.005 trainer.init.optimizer.weight_decay=0.002
+#python3 src/run.py logger.name=sage_residual_lr0.01_wd0.005_256nodes_4layers trainer=semi-supervised-ensemble model=sage_residual trainer.init.optimizer.lr=0.01 trainer.init.optimizer.weight_decay=0.005 
+
+
+
+python3 run.py logger.name=meanTeacher1:1_EMA_decay0.9999_lambda1e-3 trainer=semi-supervised-ensemble model=gcn_residual trainer.init.optimizer.lr=0.01 trainer.init.optimizer.weight_decay=0.005 
+

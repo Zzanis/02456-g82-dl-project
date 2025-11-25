@@ -1,0 +1,6 @@
+name: sage_residual
+
+init:
+  _target_: models.SAGEResidual
+  _partial_: false
+  num_node_features: 11
