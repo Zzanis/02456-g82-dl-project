@@ -1,16 +1,18 @@
 defaults:
   - _self_
 
-method: semi-supervised-ensemble
-num_models: 3  # Number of models in the ensemble
+method: semi-supervised-cps
+num_models: 2  # CPS requires exactly 2 models
 
 train:
   total_epochs: 250
   validation_interval: 10
 
 init:
-  _target_: trainer.SemiSupervisedEnsemble
+  _target_: trainer.SemiSupervisedCPS
   supervised_criterion:
+    _target_: torch.nn.MSELoss
+  cps_criterion:
     _target_: torch.nn.MSELoss
   optimizer:
     _target_: torch.optim.AdamW
@@ -18,11 +20,10 @@ init:
     lr: 0.01
     weight_decay: 0.01
   scheduler:
-    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _target_: torch.optim.lr_scheduler.StepLR
     _partial_: true
     step_size: 10
     gamma: 0.9
+  lambda_cps: 1.0  # Weight for CPS loss (paper uses 1.5 for VOC, 6 for Cityscapes; start with 1.0 for regression)
   patience: 20  # Stop training after 20 validations without improvement
   min_delta: 0.001  # Minimum improvement to reset patience counter
-
-    
