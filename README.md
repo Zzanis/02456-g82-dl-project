@@ -47,6 +47,25 @@ python src/run.py model=gcn
 
 The configuration files are located in the `configs/` directory.
 
+### Using experiments
+
+Use experiments to document multiple different configurations of interest for repeatable runs.
+
+Create your own experiment config file (for example, `my-experiment.yaml`) under `src/config/experiments`, and in it specify the overrides for model, trainer etc as needed (see [Hydra docs](https://hydra.cc/docs/patterns/configuring_experiments/) for more details).
+
+Run the experiment by appending the experiment name (file name without the extension):
+
+```bash
+python src/run.py +experiment=my-experiment
+```
+
+Experiment can be combined with other command-line overrides - these will override whatever is in the experiment as well:
+
+```bash
+python src/run.py +experiment=my-experiment trainer.num_models=3
+```
+
+
 ## Improving the predictive accuracy
 There are many ways to improve the GNN. Please try to get the validation error (MSE) as low as possible. I have not implemented the code to run on the test data. That is for you to do, but please wait until you have the final model.
 Here are some great resources:
