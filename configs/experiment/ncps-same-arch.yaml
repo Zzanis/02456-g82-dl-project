@@ -3,10 +3,10 @@ defaults:
   - override /model: gcn
   - override /trainer: n-cps
 
-train:
-  total_epochs: 500
 
 trainer:
+  train:
+    total_epochs: 500
   num_models: 2
   init:
     optimizer:
