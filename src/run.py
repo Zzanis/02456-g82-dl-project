@@ -41,6 +41,7 @@ def main(cfg: DictConfig) -> None:
     if isinstance(cfg.model.init, DictConfig):
         # Default is 1 instance
         num_models = cfg.trainer.get("num_models", 1)
+        print(f"Will initialise {num_models} {cfg.model.name} models")
         for i in range(num_models):
             # Create the model (GNN) and move it to the selected device
             gnn_model = hydra.utils.instantiate(cfg.model.init).to(device)

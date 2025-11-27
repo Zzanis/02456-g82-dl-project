@@ -319,6 +319,7 @@ class SemiSupervisedCPS:
                 cps_labeled_losses_log.append(cps_labeled_loss.item())
                 cps_unlabeled_losses_log.append(cps_unlabeled_loss.item())
                 total_losses_log.append(total_loss.item())
+                cps_loss_logged = cps_labeled_loss.detach() + cps_unlabeled_loss.detach()
             
             # Step scheduler
             self.scheduler.step()
@@ -328,6 +329,7 @@ class SemiSupervisedCPS:
                 "supervised_loss": np.mean(supervised_losses_log),
                 "cps_labeled_loss": np.mean(cps_labeled_losses_log),
                 "cps_unlabeled_loss": np.mean(cps_unlabeled_losses_log),
+                "cps_loss": np.mean(cps_loss_logged),  # type: ignore
                 "total_loss": np.mean(total_losses_log),
                 "learning_rate": self.optimizer.param_groups[0]['lr'],
             }

@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /model: gcn
+  - override /trainer: n-cps
+
+train:
+  total_epochs: 500
+
+trainer:
+  num_models: 2
+  init:
+    optimizer:
+      lr: 0.01
+      weight_decay: 0.01
+    scheduler:
+      step_size: 10
+      gamma: 0.9

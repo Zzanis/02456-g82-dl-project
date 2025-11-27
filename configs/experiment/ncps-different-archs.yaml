@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - override /model: gcn-graphconv-ensemble
+  - override /trainer: n-cps
+
+trainer:
+  init:
+    optimizer:
+      lr: 0.01
+      weight_decay: 0.005
+
+# trainer:
+#   init:
+#     cps_loss_weight: 1
