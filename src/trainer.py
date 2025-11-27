@@ -503,7 +503,7 @@ class NCrossPseudoSupervision:
             summary_dict = {
                 "supervised_loss": mean_supervised_loss_logged,
                 "cps_loss": mean_cps_loss_logged,
-                "loss": mean_total_loss_logged,
+                "total_loss": mean_total_loss_logged,
             }
             if epoch % validation_interval == 0 or epoch == total_epochs:
                 val_metrics = self.validate()
