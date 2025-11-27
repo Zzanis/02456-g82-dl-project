@@ -1,9 +1,10 @@
 # @package _global_
 defaults:
   - override /model: miglec-gcn-graphconv
-  - override /trainer: semi-supervised-ensemble
+  - override /trainer: supervised-ensemble
 
 trainer:
+  num_models: 1
   init:
     optimizer:
       lr: 0.01

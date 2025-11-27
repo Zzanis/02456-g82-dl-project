@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
-class SemiSupervisedEnsemble:
+class SupervisedEnsemble:
     def __init__(
         self,
         supervised_criterion,
