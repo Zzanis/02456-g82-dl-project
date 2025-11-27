@@ -14,6 +14,10 @@ init:
   num_workers: 4
   #splits: [10, 109990, 10000, 10831] # this is just to compare performance to Mikkel's code
   splits: [0.72, 0.08, 0.1, 0.1] # DEFAULT OPTION: 80% train, 10% validation, 10% test. Of the training data, 90% is for unlabeled and 10% for labeled.
+  # Determines unlabelled batch size in relation to the labeled batch size (batch_size_train), for the given splits
+  # Ratio of 0.2 means for labeled batch size 100, unlabeled batch size will be 500
+  # Should not be smaller than the labeled/unlabeled split 10/90 ~= 0.(1), otherwise it'll not iterate over all labeled data
+  labeled_to_unlabeled_ratio: 1
   seed: 0
   subset_size: null
   
