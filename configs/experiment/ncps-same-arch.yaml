@@ -17,3 +17,6 @@ trainer:
     scheduler:
       step_size: 10
       gamma: 0.9
+
+logger:
+  name: ${model.name}_${trainer.method}_${model.name}x${trainer.num_models}_label_ratio${dataset.init.labeled_to_unlabeled_ratio}
