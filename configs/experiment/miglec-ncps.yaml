@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - override /model: miglec-ensemble
+  - override /trainer: n-cps
+
+trainer:
+  init:
+    optimizer:
+      lr: 0.01
+      weight_decay: 0.005
+
+# TODO migcer: remove
+# logger:
+#     disable: true
+#   entity: miglec-n-a
+#   project_name: semi-supervised-ensembles

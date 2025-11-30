@@ -32,7 +32,7 @@ cd /zhome/c5/9/156511/DL-project/02456-g82-dl-project
 echo "Working directory: $(pwd)"
 
 # Always use ensemble trainer
-#EXTRA_ARGS="trainer=semi-supervised-ensemble"
+#EXTRA_ARGS="trainer=supervised-ensemble"
 
 # If this is a job array, map LSB_JOBINDEX to learning rate
 #if [ ! -z "$LSB_JOBINDEX" ]; then

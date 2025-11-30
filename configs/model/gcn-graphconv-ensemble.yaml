@@ -1,0 +1,24 @@
+defaults:
+  - _self_
+
+name: gcn-graphconv-ensemble
+
+init:
+  - _target_: models.advanced_GCN
+    _partial_: false
+    num_node_features: 11
+    hidden_channels: 128
+    dropout: 0.05
+    use_layer_norm: false
+    use_residual: true
+    use_kaiming_init: false
+  - _target_: models_miglec.GCN_GraphConv
+    _partial_: false
+    num_node_features: 11
+    hidden_channels: 128
+    dropout: 0
+    dropout_final: 0
+    use_residual: false
+    norm_layer_type:
+      _target_: models_miglec.NormLayerType
+      value: "batch"
