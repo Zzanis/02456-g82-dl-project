@@ -3,7 +3,7 @@
 # Adjust learning rates in LR_VALUES below.
 #BSUB -J dl_project_g82_cps_loss_weight[1-15]
 #BSUB -q hpc
-#BSUB -W 6:00
+#BSUB -W 10:00
 #BSUB -n 12
 #BSUB -R "span[hosts=1]"
 #BSUB -R "rusage[mem=32GB]"
