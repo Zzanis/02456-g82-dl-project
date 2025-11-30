@@ -9,6 +9,8 @@ trainer:
     total_epochs: 500
   num_models: 2
   init:
+    cps_loss_weight: 1.97  # for num_models=3
+    # cps_loss_weight: 1.72  # for num_models=2
     optimizer:
       lr: 0.01
       weight_decay: 0.01
