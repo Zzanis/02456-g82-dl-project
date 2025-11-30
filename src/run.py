@@ -1,3 +1,6 @@
+from datetime import datetime
+from pathlib import Path
+
 import hydra
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -68,6 +71,33 @@ def main(cfg: DictConfig) -> None:
     results = trainer.train(**cfg.trainer.train)
     if results is not None:
         results = torch.Tensor(results)
+
+    # Save trained model weights
+    if cfg.get("save_model", False):
+        model_dir = Path(f"{cfg.result_dir}/models")
+        model_dir.mkdir(parents=True, exist_ok=True)
+        models_file_path = model_dir / datetime.now().strftime("%Y-%m-%d_%H-%M-%s")
+        model_state_dicts = [model.state_dict() for model in models]
+        torch.save(
+            {
+                "model_state_dicts": model_state_dicts,
+                "config": OmegaConf.to_container(cfg)
+            },
+            models_file_path,
+        )
+        print(f"Saved model dicts to {models_file_path}")
+
+    # Load model(s) - TODO
+    # models_file_path = Path("results/models/2025-11-30_00-16-1764458214")
+    # checkpoint = torch.load(models_file_path)
+    # cfg = OmegaConf.create(checkpoint["config"])
+    # # Instantiate models
+    # model = hydra.utils.instantiate(cfg.model.init)
+    # print(f"type(mode): {type(model)}")
+    # model.load_state_dict(checkpoint["model_state_dicts"][0])
+    # print(model)
+    # print(model.parameters())
+    # print(model.state_dict())
 
 
 if __name__ == "__main__":
