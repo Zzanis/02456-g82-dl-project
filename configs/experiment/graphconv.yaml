@@ -1,13 +1,17 @@
 # @package _global_
 defaults:
-  - override /model: miglec-ensemble
-  - override /trainer: n-cps
+  - override /model: gcn-graphconv
+  - override /trainer: supervised-ensemble
 
 trainer:
+  num_models: 1
   init:
     optimizer:
       lr: 0.01
       weight_decay: 0.005
+    scheduler:
+      step_size: 1
+      gamma: 0.975
 
 # TODO migcer: remove
 # logger:

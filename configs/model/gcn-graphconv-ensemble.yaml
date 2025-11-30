@@ -12,7 +12,7 @@ init:
     use_layer_norm: false
     use_residual: true
     use_kaiming_init: false
-  - _target_: models_miglec.GCN_GraphConv
+  - _target_: models.GCN_GraphConv
     _partial_: false
     num_node_features: 11
     hidden_channels: 128
@@ -20,5 +20,5 @@ init:
     dropout_final: 0
     use_residual: false
     norm_layer_type:
-      _target_: models_miglec.NormLayerType
+      _target_: models.NormLayerType
       value: "batch"
