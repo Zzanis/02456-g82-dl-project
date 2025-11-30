@@ -18,7 +18,7 @@ init:
     lr: 0.01
     weight_decay: 0.01
   scheduler:
-    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _target_: torch.optim.lr_scheduler.StepLR  #CosineAnnealingLR
     _partial_: true
     step_size: 10
     gamma: 0.9

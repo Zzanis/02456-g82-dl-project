@@ -1,5 +1,5 @@
 #!/bin/bash
-#BSUB -q gpua40
+#BSUB -q gpua100
 #BSUB -J run_sage
 #BSUB -n 8
 #BSUB -R "rusage[mem=24000]"
@@ -26,5 +26,5 @@ source "/zhome/3d/c/222266/ComputationalTools/AmazonReview/.venv/bin/activate"
 
 
 
-python3 run.py logger.name=meanTeacher1:1_EMA_decay0.9999_lambda1e-3 trainer=semi-supervised-ensemble model=gcn_residual trainer.init.optimizer.lr=0.01 trainer.init.optimizer.weight_decay=0.005 
+python3 run.py logger.name=basic_model_meanTeacher_1to1_emadecay30+0.01 trainer=semi-supervised_meanteacher1:1 trainer.num_models=1 trainer.init.consistency_rampup_epochs=30 trainer.init.consistency_weight=0.01
 

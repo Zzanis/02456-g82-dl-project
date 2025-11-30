@@ -4,7 +4,6 @@ from torch_geometric.nn import GCNConv, global_mean_pool, SAGEConv, SAGEConv, gl
 
 
 #-------------- Basic GCN ---------------
-#-------------- Basic GCN ---------------
 class GCN(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=128):
         super(GCN, self).__init__()
@@ -40,7 +39,7 @@ class GCN(torch.nn.Module):
 
 #-------------- Residual Block GCN ---------------
     
-class GCNResBlock(torch.nn.Module):
+class GCNResBlock_old(torch.nn.Module):
     def __init__(self, in_ch, out_ch, p_drop: float = 0.0):
         super().__init__()
         self.conv = GCNConv(in_ch, out_ch)
@@ -61,7 +60,7 @@ class GCNResBlock(torch.nn.Module):
         return out + x  # Residual-Add
     
 #-------------- GCN with Residual Blocks ---------------
-class GCNResidual(torch.nn.Module):
+class GCNResidual_old(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=256):
         super().__init__()
         self.block1 = GCNResBlock(num_node_features, hidden_channels, p_drop=0.0)
@@ -85,7 +84,7 @@ class GCNResidual(torch.nn.Module):
     
 #-------------- GCN with Residual Blocks and Dropout ---------------
     
-class GCNResidualDropout(torch.nn.Module):
+class GCNResidualDropout_old(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=128, p_drop=0.1):
         super().__init__()
         self.block1 = GCNResBlock(num_node_features, hidden_channels, p_drop=p_drop)
@@ -107,7 +106,7 @@ class GCNResidualDropout(torch.nn.Module):
         return x
     
 #-------------- GraphSAGE ---------------
-class GraphSAGE(torch.nn.Module):
+class GraphSAGE_old(torch.nn.Module):
     def __init__(self, num_node_features, hidden_channels=128, dropout=0.2):
         super().__init__()
         self.conv1 = SAGEConv(num_node_features, hidden_channels)
