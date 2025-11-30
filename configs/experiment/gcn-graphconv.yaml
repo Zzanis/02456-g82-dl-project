@@ -4,6 +4,8 @@ defaults:
   - override /trainer: supervised-ensemble
 
 trainer:
+  train:
+    total_epochs: 500
   num_models: 1
   init:
     optimizer:
