@@ -27,5 +27,3 @@ trainer:
         _partial_: true
         step_size: 1
         gamma: 0.975
-    cps_loss_weight: 1.97  # for num_models=3
-    # cps_loss_weight: 1.72  # for num_models=2
