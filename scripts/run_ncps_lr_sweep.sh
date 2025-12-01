@@ -34,4 +34,4 @@ module load cuda/12.8.0
 
 source $REPO/.venv/bin/activate
 
-python $REPO/src/run.py +experiment=ncps-same-arch trainer.init.optimizer.0.lr=$LR $GNN_RUN_OPTS
+python $REPO/src/run.py +experiment=ncps-same-arch-sweep trainer.init.optimizer.0.lr=$LR $GNN_RUN_OPTS
