@@ -27,3 +27,6 @@ trainer:
         _partial_: true
         step_size: 1
         gamma: 0.975
+
+logger:
+  name: ${model.name}_${trainer.method}_${model.name}_w${trainer.init.cps_loss_weight}
