@@ -15,6 +15,8 @@ class SupervisedEnsemble:
         models,
         logger,
         datamodule,
+        early_stopping=False,
+        gradient_clipping=False,
         patience=20,
         min_delta=0.001,
     ):
@@ -36,6 +38,8 @@ class SupervisedEnsemble:
         self.logger = logger
 
         # Early stopping
+        self.early_stopping = early_stopping
+        self.gradient_clipping = gradient_clipping
         self.patience = patience
         self.min_delta = min_delta
         self.best_val_loss = float('inf')
@@ -77,8 +81,9 @@ class SupervisedEnsemble:
                 loss = supervised_loss
                 loss.backward()  # type: ignore
                 # adding gradient clipping - fixed to clip all models in ensemble
-                for model in self.models:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                if self.gradient_clipping:
+                    for model in self.models:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 self.optimizer.step()
             self.scheduler.step()
             supervised_losses_logged = np.mean(supervised_losses_logged)
@@ -107,7 +112,7 @@ class SupervisedEnsemble:
                     summary_dict["early_stop_patience"] = self.patience_counter
                 
                 # Check if patience exceeded
-                if self.patience_counter >= self.patience:
+                if self.early_stopping and (self.patience_counter >= self.patience):
                     print(f"\nEarly stopping triggered at epoch {epoch}. Best val_MSE: {self.best_val_loss:.4f}")
                     # Restore best model weights
                     if self.best_models_state is not None:
