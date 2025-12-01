@@ -393,9 +393,34 @@ class NCrossPseudoSupervision:
         self.cps_loss_weight = cps_loss_weight
     
         # Optimizers (separate for each network)
-        all_params = [p for m in models for p in m.parameters()]
-        self.optimizer = optimizer(params=all_params)
-        self.scheduler = scheduler(optimizer=self.optimizer)
+        if len(optimizer) != 1 and len(models) != len(optimizer):
+            raise ValueError(
+                f"If multiple optimizers are supplied, the number of optimizers must "
+                f"match the number of models. Num of models: {len(models)}, "
+                f"num of optimizers: {len(optimizer)}"
+            )
+        if len(optimizer) != len(scheduler):
+            raise ValueError(
+                f"Number of optimizers must match the number of schedulers."
+                f"Num of optimizers: {len(optimizer)}, "
+                f"num of schedulers: {len(scheduler)}"
+            )
+
+        if len(optimizer) == 1:
+            all_params = [p for m in models for p in m.parameters()]
+            print("Using a single optimizer for all models")
+            optim = optimizer[0](params=all_params)
+            self.optimizers = [optim]
+            self.schedulers = [scheduler[0](optimizer=optim)]
+        else:
+            self.optimizers = []
+            self.schedulers = []
+            for mod, optim, sched in zip(models, optimizer, scheduler):
+                optim = optim(params=mod.parameters())
+                print(f"Using optimizer {optim} for model {type(mod).__name__}")
+                sched = sched(optimizer=optim)
+                self.optimizers.append(optim)
+                self.schedulers.append(sched)
         
         self.device = device
         self.models = models
@@ -448,7 +473,8 @@ class NCrossPseudoSupervision:
                 targets = targets.to(self.device)
                 x_unlabeled = x_unlabeled.to(self.device)
 
-                self.optimizer.zero_grad()
+                for optimizer in self.optimizers:
+                    optimizer.zero_grad()
 
                 # Forward passes for each model with gradient to use as predictions
                 preds_labeled = [model(x) for model in self.models]
@@ -500,9 +526,11 @@ class NCrossPseudoSupervision:
                 loss = supervised_loss + self.cps_loss_weight * cps_loss
                 total_losses_logged.append(loss.detach().item())  # type: ignore
                 loss.backward()  # type: ignore
-                self.optimizer.step()
+                for optimizer in self.optimizers:
+                    optimizer.step()
 
-            self.scheduler.step()
+            for scheduler in self.schedulers:
+                scheduler.step()
             mean_supervised_loss_logged = np.mean(supervised_losses_logged)
             mean_cps_loss_logged = np.mean(cps_losses_logged)
             mean_total_loss_logged = np.mean(total_losses_logged)

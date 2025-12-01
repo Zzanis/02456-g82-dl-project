@@ -13,12 +13,12 @@ init:
     _target_: torch.nn.MSELoss
   cps_loss_weight: 0.5
   optimizer:
-    _target_: torch.optim.AdamW
-    _partial_: true
-    lr: 0.001
-    weight_decay: 0.005
+    - _target_: torch.optim.AdamW
+      _partial_: true
+      lr: 0.001
+      weight_decay: 0.005
   scheduler:
-    _target_: torch.optim.lr_scheduler.StepLR
-    _partial_: true
-    step_size: 1
-    gamma: 0.975
+    - _target_: torch.optim.lr_scheduler.StepLR
+      _partial_: true
+      step_size: 1
+      gamma: 0.975
