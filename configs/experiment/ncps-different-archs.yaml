@@ -4,6 +4,8 @@ defaults:
   - override /trainer: n-cps
 
 trainer:
+  train:
+    total_epochs: 500
   init:
     optimizer:
       # GCN optimizer
