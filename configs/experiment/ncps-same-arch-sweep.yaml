@@ -1,0 +1,26 @@
+# @package _global_
+defaults:
+  - override /model: gcn
+  - override /trainer: n-cps
+
+
+trainer:
+  train:
+    total_epochs: 500
+  num_models: 2
+  init:
+    # cps_loss_weight: 1.97  # for num_models=3
+    # cps_loss_weight: 1.72  # for num_models=2
+    optimizer:
+      - _target_: torch.optim.AdamW
+        _partial_: true
+        lr: 0.01
+        weight_decay: 0.005
+    scheduler:
+      - _target_: torch.optim.lr_scheduler.StepLR
+        _partial_: true
+        step_size: 10
+        gamma: 0.9
+
+logger:
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_lr${trainer.init.optimizer.0.lr}_wd${trainer.init.optimizer.0.weight_decay}
