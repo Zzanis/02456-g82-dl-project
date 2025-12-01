@@ -1,0 +1,3 @@
+TODO:
+- run mean teacher with Smillas settings and AdvancedGCN
+- Sweep parameters: lambda, ema decay, lr, batch size

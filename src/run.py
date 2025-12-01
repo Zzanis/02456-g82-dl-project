@@ -45,7 +45,9 @@ def main(cfg):
         model = torch.compile(model)
     models = [model]
     
-    # Initialize the trainer with model, logger, data, and device
+    # cfg.trainer.init.lambda_max = cfg.trainer.train.lambda_max
+    # cfg.trainer.init.total_epochs = cfg.trainer.train.total_epochs
+    # # Initialize the trainer with model, logger, data, and device
     trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
 
     # Train the model and collect results

@@ -1,0 +1,23 @@
+Loaded dependency [python3/3.10.12]: sqlite3/3.42.0
+Loaded module: python3/3.10.12
+
+Loading python3/3.10.12
+  Loading requirement: sqlite3/3.42.0
+Loaded module: gcc/13.3.0-binutils-2.42
+wandb: Currently logged in as: adopetr (adopetr-danmarks-tekniske-universitet-dtu) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run rvszw77o
+wandb: Tracking run with wandb version 0.23.0
+wandb: Run data is saved locally in ./logs/wandb/run-20251130_231700-rvszw77o
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run schnet_lambda_0.001
+wandb: ⭐️ View project at https://wandb.ai/DL-gr82/semi-supervised-ensembles
+wandb: 🚀 View run at https://wandb.ai/DL-gr82/semi-supervised-ensembles/runs/rvszw77o
+Error executing job with overrides: ['trainer=semi-supervised-ensemble-custom', 'model=schnet_model', '+train.lambda_max=0.001', '+train.total_epochs=350', 'logger.name=schnet_lambda_0.001']
+Traceback (most recent call last):
+  File "/zhome/f9/1/147385/02456-g82-dl-project/src/run.py", line 48, in main
+    cfg.trainer.init.lambda_max = cfg.trainer.train.lambda_max
+omegaconf.errors.ConfigAttributeError: Key 'lambda_max' is not in struct
+    full_key: trainer.init.lambda_max
+    object_type=dict
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

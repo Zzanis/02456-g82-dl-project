@@ -230,6 +230,157 @@ class SemiSupervisedEnsemble:
 
             self.logger.log_dict(summary_dict, step=epoch)
 
+# # --------------------------------------
+# class SemiSupervisedEnsemble:
+#     def __init__(
+#         self,
+#         supervised_criterion,
+#         optimizer,
+#         scheduler,
+#         device,
+#         models,                     # list of n student models
+#         logger,
+#         datamodule,
+#         use_mean_teacher: bool = True,
+#         ema_init: float = 0.95,
+#         ema_target: float = 0.99,
+#         ema_ramp_epochs: int = 50,
+#         lambda_max: float = 0.01,
+#         lambda_ramp_epochs: int = 20,
+#         grad_clip: float = 1.0
+#     ):
+#         self.device = device
+#         self.models = models  # n students
+
+#         # Optimizer over all students
+#         all_params = [p for m in self.models for p in m.parameters()]
+#         self.optimizer = optimizer(params=all_params)
+#         self.scheduler = scheduler(optimizer=self.optimizer)
+#         self.supervised_criterion = supervised_criterion
+
+#         # Data
+#         self.supervised_loader = datamodule.train_dataloader()
+#         self.unsupervised_loader = getattr(datamodule, "unsupervised_train_dataloader", lambda: None)()
+#         self.val_dataloader = datamodule.val_dataloader()
+#         self.test_dataloader = datamodule.test_dataloader()
+
+#         # Logging
+#         self.logger = logger
+
+#         # Mean teacher
+#         self.use_mean_teacher = use_mean_teacher
+#         self.ema_init = ema_init
+#         self.ema_target = ema_target
+#         self.ema_ramp_epochs = ema_ramp_epochs
+#         self.lambda_max = lambda_max
+#         self.lambda_ramp_epochs = lambda_ramp_epochs
+#         self.grad_clip = grad_clip
+
+#         if self.use_mean_teacher:
+#             # single teacher, copied from the first student
+#             self.teacher_model = copy.deepcopy(self.models[0]).to(self.device)
+#             self.teacher_model.eval()
+#             for p in self.teacher_model.parameters():
+#                 p.requires_grad = False
+#         else:
+#             self.teacher_model = None
+
+#         self.global_step = 0
+
+#     def current_ema_decay(self, epoch):
+#         frac = min(1.0, epoch / max(1, self.ema_ramp_epochs))
+#         return float(self.ema_init + frac * (self.ema_target - self.ema_init))
+
+#     def current_lambda(self, epoch):
+#         frac = min(1.0, epoch / max(1, self.lambda_ramp_epochs))
+#         return float(self.lambda_max * frac)
+
+#     def update_teacher(self, current_decay):
+#         """EMA from the average of all student parameters to single teacher."""
+#         if not self.use_mean_teacher:
+#             return
+#         for teacher_p, *student_params in zip(
+#             self.teacher_model.parameters(), *[m.parameters() for m in self.models]
+#         ):
+#             # average student parameters along all n students
+#             avg_student = torch.stack([p.data for p in student_params]).mean(0)
+#             teacher_p.data.mul_(current_decay).add_(avg_student * (1 - current_decay))
+
+#     def validate(self):
+#         models_to_eval = [self.teacher_model] if self.use_mean_teacher else self.models
+#         for m in models_to_eval:
+#             m.eval()
+
+#         val_losses = []
+#         with torch.no_grad():
+#             for x, targets in self.val_dataloader:
+#                 x, targets = x.to(self.device), targets.to(self.device)
+#                 preds = [m(x) for m in models_to_eval]
+#                 avg_preds = torch.stack(preds).mean(0)
+#                 val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+#                 val_losses.append(val_loss.item())
+#         return {"val_MSE": float(np.mean(val_losses))}
+
+#     def train(self, total_epochs, validation_interval):
+#         for epoch in range(1, total_epochs + 1):
+#             current_lambda = self.current_lambda(epoch)
+#             ema_decay_now = self.current_ema_decay(epoch)
+
+#             for m in self.models:
+#                 m.train()
+#             if self.teacher_model:
+#                 self.teacher_model.eval()
+
+#             if self.unsupervised_loader is not None and current_lambda > 0:
+#                 unsup_iter = cycle(self.unsupervised_loader)
+#             else:
+#                 unsup_iter = None
+
+#             for x_sup, y_sup in self.supervised_loader:
+#                 x_sup, y_sup = x_sup.to(self.device), y_sup.to(self.device)
+#                 x_unsup = next(unsup_iter)[0].to(self.device) if unsup_iter else None
+
+#                 # Supervised loss
+#                 sup_losses = [self.supervised_criterion(m(x_sup), y_sup) for m in self.models]
+#                 sup_loss = torch.stack(sup_losses).mean()
+
+#                 # Unsupervised loss
+#                 if x_unsup is not None and current_lambda > 0:
+#                     with torch.no_grad():
+#                         pseudo = self.teacher_model(x_unsup)
+#                     unsup_losses = [torch.nn.functional.mse_loss(m(x_unsup), pseudo) for m in self.models]
+#                     unsup_loss = torch.stack(unsup_losses).mean()
+#                 else:
+#                     unsup_loss = None
+
+#                 # Combined loss
+#                 total_loss = sup_loss if unsup_loss is None else sup_loss + current_lambda * unsup_loss
+
+#                 self.optimizer.zero_grad()
+#                 total_loss.backward()
+#                 if self.grad_clip is not None:
+#                     torch.nn.utils.clip_grad_norm_(
+#                         [p for m in self.models for p in m.parameters() if p.grad is not None],
+#                         self.grad_clip
+#                     )
+#                 self.optimizer.step()
+#                 self.global_step += 1
+
+#                 # EMA update
+#                 if self.use_mean_teacher:
+#                     self.update_teacher(ema_decay_now)
+
+#             if epoch % validation_interval == 0 or epoch == total_epochs:
+#                 val_metrics = self.validate()
+#             self.logger.log_dict({
+#                     "epoch": epoch,
+#                     "supervised_loss": float(sup_loss),
+#                     "unsupervised_loss": float(unsup_loss) if unsup_loss else 0.0,
+#                     "lambda_unsup": float(current_lambda),
+#                     "ema_decay": float(ema_decay_now),
+#                     **val_metrics
+#                 }, step=epoch)
+
 
 
 
