@@ -25,4 +25,4 @@ trainer:
         gamma: 0.9
 
 logger:
-  name: ${model.name}_${trainer.method}_n${trainer.num_models}_lambda${trainer.init.cps_loss_weight}
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_lambda${trainer.init.cps_loss_weight}_seed{seed}
