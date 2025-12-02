@@ -9,7 +9,7 @@ trainer:
     total_epochs: 500
   num_models: 3
   init:
-    cps_loss_weight: 1.97  # for num_models=3
+    # cps_loss_weight: 1.97  # for num_models=3
     # cps_loss_weight: 1.72  # for num_models=2
     optimizer:
     # Default optimizer is based on GCN model baseline setup
@@ -25,4 +25,4 @@ trainer:
         gamma: 0.9
 
 logger:
-  name: ${model.name}_${trainer.method}_${model.name}x${trainer.num_models}_label_ratio${dataset.init.labeled_to_unlabeled_ratio}
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_lambda${trainer.init.cps_loss_weight}
