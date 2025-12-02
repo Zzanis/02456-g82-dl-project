@@ -1,5 +1,5 @@
 #!/bin/bash
-#BSUB -J dl_project_g82_ncps_lr[1-9]
+#BSUB -J dl_project_g82_ncps_lr[1-5]
 #BSUB -q hpc
 #BSUB -W 6:00
 #BSUB -n 12
@@ -16,7 +16,7 @@ source $DL_PROJECT_CONFIG_FILE
 REPO=${DL_PROJECT_REPO_DIR:?Missing variable}
 RUN_DIR=${DL_PROJECT_RUN_DIR:-$DL_PROJECT_REPO_DIR}
 
-LR_VALUES=(0.0001 0.001 0.005 0.01 0.03)
+LR_VALUES=(0.001 0.005 0.01 0.03 0.05)
 LR=${LR_VALUES[$((LSB_JOBINDEX-1))]}
 
 echo "Project repo dir: $REPO"
