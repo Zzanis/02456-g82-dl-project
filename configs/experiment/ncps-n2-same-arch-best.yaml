@@ -6,9 +6,11 @@ defaults:
 
 trainer:
   train:
-    total_epochs: 500
+    total_epochs: 350
   num_models: 2
   init:
+    # Optimal lambda
+    cps_loss_weight: 1.5
     # Optimal LR and WD for 2-CPS
     optimizer:
       - _target_: torch.optim.AdamW
@@ -23,4 +25,4 @@ trainer:
         gamma: 0.9
 
 logger:
-  name: ${model.name}_${trainer.method}_n${trainer.num_models}_optim_lambda${trainer.init.cps_loss_weight}_seed${seed}
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_best_seed=${seed}
