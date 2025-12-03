@@ -94,7 +94,7 @@ def save_results(results, log_dir):
 
 def save_results_dict(results: dict, res_dir: Path) -> None:
     res_dir.mkdir(exist_ok=True)
-    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%s")
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%f")
     res_file_path = res_dir / f"results_{ts}.csv"
 
     with open(res_file_path, "w") as f:

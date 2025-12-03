@@ -76,7 +76,7 @@ def main(cfg: DictConfig) -> None:
     if cfg.get("save_model", False):
         model_dir = Path(f"{cfg.result_dir}/models")
         model_dir.mkdir(parents=True, exist_ok=True)
-        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%s")
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%f")
         models_file_path = model_dir / f"{cfg.save_model_filename}_{ts}"
         model_state_dicts = [model.state_dict() for model in models]
         torch.save(
