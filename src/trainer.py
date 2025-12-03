@@ -68,7 +68,7 @@ class SupervisedEnsemble:
 
     def test(self):
         for model in self.models:
-            model.test()
+            model.eval()
 
         test_losses = []
         
