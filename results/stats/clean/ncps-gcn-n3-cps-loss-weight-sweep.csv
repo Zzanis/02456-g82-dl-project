@@ -1,0 +1,9 @@
+,run_id,run_name,seed,val_mse,model,cps_loss_weight,lr,weight_decay,num_models
+0,eac9f5y8,gcn_n-cps_e500,0,0.03533075696655682,models.advanced_GCN,0.0,0.01,0.01,3
+1,oymik9fw,gcn_n-cps_e500,0,0.03513633752507823,models.advanced_GCN,0.5,0.01,0.01,3
+2,zw9zb2pd,gcn_n-cps_e500,0,0.03409400449267456,models.advanced_GCN,1.0,0.01,0.01,3
+3,18ko2yb1,gcn_n-cps_e500,0,0.03524344653955528,models.advanced_GCN,2.0,0.01,0.01,3
+4,rgk0l423,gcn_n-cps_e500,0,0.035560808543648036,models.advanced_GCN,1.5,0.01,0.01,3
+5,9lvx5o7c,gcn_n-cps_e500,0,0.03630918636918068,models.advanced_GCN,5.0,0.01,0.01,3
+6,196afafw,gcn_n-cps_3_seed=0,0,0.03565154783427715,models.advanced_GCN,3.5,0.01,0.01,3
+7,y8dxyx8c,gcn_n-cps_3_seed=0,0,0.03630819437759263,models.advanced_GCN,4.0,0.01,0.01,3
