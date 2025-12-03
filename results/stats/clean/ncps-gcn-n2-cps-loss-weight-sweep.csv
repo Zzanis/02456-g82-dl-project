@@ -1,0 +1,15 @@
+,run_id,run_name,seed,val_mse,model,cps_loss_weight,lr,weight_decay,num_models
+0,j50ce89j,gcn_n-cps_seed=0,0,0.03686285710760525,models.advanced_GCN,0.0,0.01,0.01,2
+1,0h647xwo,gcn_n-cps_seed=0,0,0.033992769196629524,models.advanced_GCN,0.5,0.01,0.01,2
+2,070jyoda,gcn_n-cps_seed=0,0,0.03329089576644557,models.advanced_GCN,1.0,0.01,0.01,2
+3,g14sjjl5,gcn_n-cps_seed=0,0,0.03477550643895354,models.advanced_GCN,1.5,0.01,0.01,2
+4,sbl2f4in,gcn_n-cps_seed=0,0,0.03588738638375487,models.advanced_GCN,2.0,0.01,0.01,2
+5,5e5cruub,gcn_n-cps_n2_lambda0_seed{seed},1,0.03743611196322101,models.advanced_GCN,0.0,0.01,0.01,2
+6,bo0pditq,gcn_n-cps_n2_lambda0.5_seed{seed},1,0.03981720602938107,models.advanced_GCN,0.5,0.01,0.01,2
+7,ris5ovsu,gcn_n-cps_n2_lambda1_seed{seed},1,0.03480345755815506,models.advanced_GCN,1.0,0.01,0.01,2
+8,51q5ju3j,gcn_n-cps_n2_lambda1.5_seed{seed},1,0.035974950928773196,models.advanced_GCN,1.5,0.01,0.01,2
+9,g112m6q7,gcn_n-cps_n2_lambda2_seed{seed},1,0.0347979481198958,models.advanced_GCN,2.0,0.01,0.01,2
+10,x3w6bjyj,gcn_n-cps_n2_lambda0_seed{seed},2,0.03643951485199587,models.advanced_GCN,0.0,0.01,0.01,2
+11,8ascpppl,gcn_n-cps_n2_lambda0.5_seed{seed},2,0.03562054729887417,models.advanced_GCN,0.5,0.01,0.01,2
+12,x36hxlgz,gcn_n-cps_n2_lambda1_seed{seed},2,0.03656963684729168,models.advanced_GCN,1.0,0.01,0.01,2
+13,q9bgktij,gcn_n-cps_n2_lambda1.5_seed{seed},2,0.0358909224825246,models.advanced_GCN,1.5,0.01,0.01,2

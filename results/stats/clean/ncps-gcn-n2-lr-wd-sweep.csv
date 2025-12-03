@@ -1,0 +1,15 @@
+,run_id,run_name,seed,val_mse,model,cps_loss_weight,lr,weight_decay,num_models
+0,pjh7g994,gcn_n-cps_n2_lr0.0001_wd0.005,0,0.0783765943987029,models.advanced_GCN,0.5,0.0001,0.005,2
+1,3mngxzfa,gcn_n-cps_n2_lr0.001_wd0.005,0,0.04563144860523088,models.advanced_GCN,0.5,0.001,0.005,2
+2,2kslrmvm,gcn_n-cps_n2_lr0.005_wd0.005,0,0.03811221356902804,models.advanced_GCN,0.5,0.005,0.005,2
+3,tm8s1tyh,gcn_n-cps_n2_lr0.01_wd0.005,0,0.03787162421005113,models.advanced_GCN,0.5,0.01,0.005,2
+4,4mbqy061,gcn_n-cps_n2_lr0.03_wd0.005,0,0.0364200978406838,models.advanced_GCN,0.5,0.03,0.005,2
+5,8t7sl9iq,gcn_n-cps_n2_lr0.0001_wd0.01,0,0.07828038292271751,models.advanced_GCN,0.5,0.0001,0.01,2
+6,no338w8n,gcn_n-cps_n2_lr0.001_wd0.01,0,0.04565838671156338,models.advanced_GCN,0.5,0.001,0.01,2
+7,4kcfyojs,gcn_n-cps_n2_lr0.005_wd0.01,0,0.04005343307341848,models.advanced_GCN,0.5,0.005,0.01,2
+8,t7plpknl,gcn_n-cps_n2_lr0.01_wd0.01,0,0.03687014829899583,models.advanced_GCN,0.5,0.01,0.01,2
+9,u7k5gwxp,gcn_n-cps_n2_lr0.03_wd0.01,0,0.03494042557265077,models.advanced_GCN,0.5,0.03,0.01,2
+10,2lhqiins,gcn_n-cps_n2_lr0.001_wd0.03,0,0.045045939939362664,models.advanced_GCN,0.5,0.001,0.03,2
+11,quksa8ll,gcn_n-cps_n2_lr0.005_wd0.03,0,0.038353635264294486,models.advanced_GCN,0.5,0.005,0.03,2
+12,cchg837m,gcn_n-cps_n2_lr0.01_wd0.03,0,0.03534706894840513,models.advanced_GCN,0.5,0.01,0.03,2
+13,d99ho3z6,gcn_n-cps_n2_lr0.03_wd0.03,0,0.03930150291749409,models.advanced_GCN,0.5,0.03,0.03,2
