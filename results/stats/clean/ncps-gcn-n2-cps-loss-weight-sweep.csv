@@ -13,3 +13,4 @@
 11,8ascpppl,gcn_n-cps_n2_lambda0.5_seed{seed},2,0.03562054729887417,models.advanced_GCN,0.5,0.01,0.01,2
 12,x36hxlgz,gcn_n-cps_n2_lambda1_seed{seed},2,0.03656963684729168,models.advanced_GCN,1.0,0.01,0.01,2
 13,q9bgktij,gcn_n-cps_n2_lambda1.5_seed{seed},2,0.0358909224825246,models.advanced_GCN,1.5,0.01,0.01,2
+14,n0v40hcr,gcn_n-cps_n2_lambda2_seed{seed},2,0.03735388203391007,models.advanced_GCN,2.0,0.01,0.01,2
