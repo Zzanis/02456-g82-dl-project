@@ -9,8 +9,6 @@ trainer:
     total_epochs: 500
   num_models: 3
   init:
-    # cps_loss_weight: 1.97  # for num_models=3
-    # cps_loss_weight: 1.72  # for num_models=2
     optimizer:
     # Default optimizer is based on GCN model baseline setup
       - _target_: torch.optim.AdamW
