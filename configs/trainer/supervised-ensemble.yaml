@@ -22,6 +22,9 @@ init:
     _partial_: true
     step_size: 10
     gamma: 0.9
+  # Adding this back here since Smilla used these for her baseline
+  gradient_clipping: true
+  early_stopping: true
   patience: 20  # Stop training after 20 validations without improvement
   min_delta: 0.001  # Minimum improvement to reset patience counter
 
