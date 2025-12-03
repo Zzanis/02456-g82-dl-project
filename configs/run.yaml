@@ -13,4 +13,5 @@ debug_mode: False # Debug mode
 result_dir: ./results
 compile_model: false # Whether to compile the model with torch.compile
 save_model: false # Save the trained model(s) as dicts
+save_model_filename: "model" # Filename prefix for model dict file
 run_test: false # Run on test data

@@ -7,10 +7,6 @@ train:
   total_epochs: 250
   validation_interval: 10
 
-test:
-  total_epochs: 350
-  validation_interval: 10
-
 init:
   _target_: trainer.NCrossPseudoSupervision
   supervised_criterion:

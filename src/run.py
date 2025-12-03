@@ -5,7 +5,7 @@ import hydra
 import torch
 from omegaconf import DictConfig, OmegaConf
 
-from utils import seed_everything
+from utils import save_results_dict, seed_everything
 
 
 @hydra.main(
@@ -72,16 +72,12 @@ def main(cfg: DictConfig) -> None:
     if results is not None:
         results = torch.Tensor(results)
 
-    if cfg.get("run_test", None):
-        # Run on test data
-        print(f"Running against test data")
-        trainer.test(**cfg.trainer.test)
-
     # Save trained model weights
     if cfg.get("save_model", False):
         model_dir = Path(f"{cfg.result_dir}/models")
         model_dir.mkdir(parents=True, exist_ok=True)
-        models_file_path = model_dir / datetime.now().strftime("%Y-%m-%d_%H-%M-%s")
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%s")
+        models_file_path = model_dir / f"{cfg.save_model_filename}_{ts}"
         model_state_dicts = [model.state_dict() for model in models]
         torch.save(
             {
@@ -91,6 +87,17 @@ def main(cfg: DictConfig) -> None:
             models_file_path,
         )
         print(f"Saved model dicts to {models_file_path}")
+
+    if cfg.get("run_test", None):
+        # Run on test data
+        print(f"Running against test data")
+        results = trainer.test()
+        logger.log_dict(results)
+        results["model_name"] = cfg.model.name
+        results["trainer_method"] = cfg.trainer.method
+        results["num_models"] = cfg.trainer.num_models
+        save_results_dict(results=results, res_dir=Path(cfg.result_dir))
+
 
     # Load model(s) - TODO
     # models_file_path = Path("results/models/2025-11-30_00-16-1764458214")

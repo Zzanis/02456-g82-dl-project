@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - override /model: gcn
+  - override /trainer: supervised-ensemble
+
+trainer:
+  num_models: 2
+  train:
+    total_epochs: 350
+
+save_model: true
+save_model_filename: "baseline_gcn_ensemble_n2"
+run_test: true
+
+logger:
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_baseline_seed=${seed}
