@@ -65,6 +65,27 @@ class SupervisedEnsemble:
         val_loss = np.mean(val_losses)
         return {"val_MSE": val_loss}
 
+
+    def test(self):
+        for model in self.models:
+            model.test()
+
+        test_losses = []
+        
+        with torch.no_grad():
+            for x, targets in self.test_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+                
+                # Ensemble prediction
+                preds = [model(x) for model in self.models]
+                avg_preds = torch.stack(preds).mean(0)
+                
+                test_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+                test_losses.append(test_loss.item())
+        test_loss = np.mean(test_losses)
+        return {"test_MSE": test_loss}
+
+
     def train(self, total_epochs, validation_interval):
         #self.logger.log_dict()
         for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
@@ -456,6 +477,27 @@ class NCrossPseudoSupervision:
                 val_losses.append(val_loss.item())
         val_loss = np.mean(val_losses)
         return {"val_MSE": val_loss}
+
+
+    def test(self):
+        for model in self.models:
+            model.eval()
+
+        test_losses = []
+
+        with torch.no_grad():
+            for x, targets in self.test_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+
+                # Use average prediction of all models
+                preds = [model(x) for model in self.models]
+                avg_preds = torch.stack(preds).mean(0)
+
+                test_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+                test_losses.append(test_loss.item())
+        test_loss = np.mean(test_losses)
+        return {"test_MSE": test_loss}
+
 
     def train(self, total_epochs: int, validation_interval: int) -> None:
         for epoch in (progress_bar := tqdm(range(1, total_epochs + 1))):

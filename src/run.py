@@ -72,6 +72,11 @@ def main(cfg: DictConfig) -> None:
     if results is not None:
         results = torch.Tensor(results)
 
+    if cfg.get("run_test", None):
+        # Run on test data
+        print(f"Running against test data")
+        trainer.test(**cfg.trainer.test)
+
     # Save trained model weights
     if cfg.get("save_model", False):
         model_dir = Path(f"{cfg.result_dir}/models")
