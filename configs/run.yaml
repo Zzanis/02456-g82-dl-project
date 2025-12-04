@@ -5,7 +5,7 @@ defaults:
   - model: gcn
   - _self_
 
-num_models: 1
+
 seed: 0 # Random seed
 device: unset # Device to use (cuda or cpu) if unset will use cuda if available
 force_deterministic: False # Force deterministic algorithms

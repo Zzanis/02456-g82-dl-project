@@ -1,7 +1,7 @@
 defaults:
   - _self_
 
-method: semi-supervised-ensemble
+method: mean-teacher
 
 train:
   total_epochs: 400

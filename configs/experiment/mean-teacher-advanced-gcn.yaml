@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /model: advanced_gcn_graph_norm
+  - override /trainer: mean_teacher_advanced_gcn_trainer
+
+logger:
+  # entity: adopetr-danmarks-tekniske-universitet-dtu
+  project_name: "Meanest Teacher"
