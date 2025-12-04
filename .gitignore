@@ -119,3 +119,4 @@ dmypy.json
 data/
 logs/
 outputs/
+hpc_logs/
