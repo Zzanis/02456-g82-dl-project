@@ -120,3 +120,6 @@ data/
 logs/
 outputs/
 hpc_logs/
+
+# Mac
+.DS_Store
