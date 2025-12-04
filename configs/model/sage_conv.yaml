@@ -4,6 +4,6 @@ defaults:
 name: sage_conv
 
 init:
-  _target_: models.GraphSAGE
+  _target_: models.GraphSAGE_2
   _partial_: false
   num_node_features: 11

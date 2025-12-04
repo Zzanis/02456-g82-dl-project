@@ -10,7 +10,7 @@ train:
 
 
 init:
-  _target_: trainer.SemiSupervisedEnsemble  # your SchNet trainer class
+  _target_: trainer.MeanTeacher  # your SchNet trainer class
 
   lambda_max: 0.03
   supervised_criterion:

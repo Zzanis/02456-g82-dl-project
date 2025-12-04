@@ -24,8 +24,8 @@ source "/zhome/f9/1/147385/my_venv/bin/activate"
 # BATCH=${BATCH_VALUES[$((LSB_JOBINDEX-1))]}
 
 # python3 src/run.py \
-#     trainer=advanced_gcn_trainer \
-#     model=advanced_gcn \
+#     trainer=mean_teacher_advanced_gcn_trainer \
+#     model=advanced_gcn_graph_norm \
 #     dataset.init.batch_size_train=$BATCH \
 #     logger.name="A_gcn_MT_GraphNorm_batch${BATCH}" \
 #     "$@"
@@ -35,8 +35,8 @@ source "/zhome/f9/1/147385/my_venv/bin/activate"
 # LR=${LR_VALUES[$((LSB_JOBINDEX-1))]}
 
 # python3 src/run.py \
-#     trainer=advanced_gcn_trainer \
-#     model=advanced_gcn \
+#     trainer=mean_teacher_advanced_gcn_trainer \
+#     model=advanced_gcn_graph_norm \
 #     trainer.init.optimizer.lr=$LR \
 #     logger.name="A_gcn_MT_GraphNorm_lr${LR}" \
 #     "$@"
@@ -49,8 +49,8 @@ LAMBDA=${LAMBDA_VALUES[$((LSB_JOBINDEX-1))]}
 # for LAMBDA in "${LAMBDA_VALUES[@]}"; do
 #     echo "Running experiment with lambda_unsup = $LAMBDA"
 python3 src/run.py \
-    trainer=advanced_gcn_trainer \
-    model=advanced_gcn \
+    trainer=mean_teacher_advanced_gcn_trainer \
+    model=advanced_gcn_graph_norm \
     trainer.init.lambda_max=$LAMBDA \
     logger.name="A_gcn_lambda_${LAMBDA}" \
     "$@"

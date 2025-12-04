@@ -24,5 +24,5 @@ source "/zhome/f9/1/147385/my_venv/bin/activate"
 
 #python3 src/run.py logger.name=sage trainer=semi-supervised-ensemble model=sage 
 
-python3 src/run.py trainer=semi-supervised-ensemble-custom model=schnet_model logger.name="SchNet Final Boss on Test"
+python3 src/run.py trainer=mean-teacher model=schnet_model logger.name="SchNet Final Boss on Test"
 #logger.name=gcn_residual_lr0.005_wd0.002 trainer=semi-supervised-ensemble model=gcn_residual trainer.init.optimizer.lr=0.005 trainer.init.optimizer.weight_decay=0.002

@@ -1,10 +1,10 @@
 defaults:
   - _self_
 
-name: advanced_gcn
+name: advanced_gcn_graph_norm
 
 init:
-  _target_: models.advanced_GCN
+  _target_: models.advanced_GCN_graph_norm
   _partial_: false
   num_node_features: 11
   hidden_channels: 128
