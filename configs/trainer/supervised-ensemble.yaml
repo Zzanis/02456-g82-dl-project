@@ -1,7 +1,7 @@
 defaults:
   - _self_
 
-method: semi-supervised-ensemble
+method: supervised-ensemble
 num_models: 3  # Number of models in the ensemble
 
 train:
@@ -9,7 +9,7 @@ train:
   validation_interval: 10
 
 init:
-  _target_: trainer.SemiSupervisedEnsemble
+  _target_: trainer.SupervisedEnsemble
   supervised_criterion:
     _target_: torch.nn.MSELoss
   optimizer:
@@ -22,6 +22,9 @@ init:
     _partial_: true
     step_size: 10
     gamma: 0.9
+  # Adding this back here since Smilla used these for her baseline
+  gradient_clipping: true
+  early_stopping: true
   patience: 20  # Stop training after 20 validations without improvement
   min_delta: 0.001  # Minimum improvement to reset patience counter
 

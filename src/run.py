@@ -1,9 +1,11 @@
-from itertools import chain
+from datetime import datetime
+from pathlib import Path
+
 import hydra
 import torch
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
-from utils import seed_everything
+from utils import save_results_dict, seed_everything
 
 
 @hydra.main(
@@ -11,7 +13,7 @@ from utils import seed_everything
     config_name="run.yaml",
     version_base=None,
 )
-def main(cfg):
+def main(cfg: DictConfig) -> None:
     # Print the full configuration for transparency
     print(OmegaConf.to_yaml(cfg))
 
@@ -37,29 +39,77 @@ def main(cfg):
     # Load the dataset (QM9 molecular data)
     dm = hydra.utils.instantiate(cfg.dataset.init)
 
-    # Create ensemble of models
-    num_models = cfg.trainer.get("num_models", 1)
     models = []
+    # Handle one or more instances of the same model, where cfg.model.init is a single instance
+    if isinstance(cfg.model.init, DictConfig):
+        # Default is 1 instance
+        num_models = cfg.trainer.get("num_models", 1)
+        print(f"Will initialise {num_models} {cfg.model.name} models")
+        for i in range(num_models):
+            # Create the model (GNN) and move it to the selected device
+            gnn_model = hydra.utils.instantiate(cfg.model.init).to(device)
+            models.append(gnn_model)
+    else:
+        # Handle instances of models with different architectures, where cfg.model.init is a list
+        for model_init in cfg.model.init:
+            model = hydra.utils.instantiate(model_init).to(device)
+            print(f"arch: {model}")
+            # logger.log("architecture", model)
+            models.append(model)
 
-    for i in range(num_models):
-        # Create the model (GNN) and move it to the selected device
-        gnn_model = hydra.utils.instantiate(cfg.model.init).to(device)
+    # Optionally compile the model for faster execution
+    if cfg.compile_model:
+        for i, model in enumerate(models):
+            models[i] = torch.compile(model)
 
-        # Optionally compile the model for faster execution
-        if cfg.compile_model:
-            gnn_model = torch.compile(gnn_model)
-
-        models.append(gnn_model)
-    
-    # cfg.trainer.init.lambda_max = cfg.trainer.train.lambda_max
-    # cfg.trainer.init.total_epochs = cfg.trainer.train.total_epochs
-    # # Initialize the trainer with model, logger, data, and device
-    trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
+    # Initialize the trainer with models, logger, data, and device
+    trainer = hydra.utils.instantiate(
+        cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device
+    )
 
     # Train the model and collect results
     results = trainer.train(**cfg.trainer.train)
     if results is not None:
         results = torch.Tensor(results)
+
+    # Save trained model weights
+    if cfg.get("save_model", False):
+        model_dir = Path(f"{cfg.result_dir}/models")
+        model_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%f")
+        models_file_path = model_dir / f"{cfg.save_model_filename}_{ts}"
+        model_state_dicts = [model.state_dict() for model in models]
+        torch.save(
+            {
+                "model_state_dicts": model_state_dicts,
+                "config": OmegaConf.to_container(cfg)
+            },
+            models_file_path,
+        )
+        print(f"Saved model dicts to {models_file_path}")
+
+    if cfg.get("run_test", None):
+        # Run on test data
+        print(f"Running against test data")
+        results = trainer.test()
+        logger.log_dict(results)
+        results["model_name"] = cfg.model.name
+        results["trainer_method"] = cfg.trainer.method
+        results["num_models"] = cfg.trainer.num_models
+        save_results_dict(results=results, res_dir=Path(cfg.result_dir))
+
+
+    # Load model(s) - TODO
+    # models_file_path = Path("results/models/2025-11-30_00-16-1764458214")
+    # checkpoint = torch.load(models_file_path)
+    # cfg = OmegaConf.create(checkpoint["config"])
+    # # Instantiate models
+    # model = hydra.utils.instantiate(cfg.model.init)
+    # print(f"type(mode): {type(model)}")
+    # model.load_state_dict(checkpoint["model_state_dicts"][0])
+    # print(model)
+    # print(model.parameters())
+    # print(model.state_dict())
 
     # if hasattr(trainer, "test"):
     #     test_results = trainer.test()

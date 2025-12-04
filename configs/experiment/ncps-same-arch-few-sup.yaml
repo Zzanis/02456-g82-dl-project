@@ -1,0 +1,43 @@
+# @package _global_
+defaults:
+  - override /model: gcn
+  - override /trainer: n-cps
+
+
+trainer:
+  train:
+    total_epochs: 500
+  num_models: 3
+  init:
+    cps_loss_weight: 1.97  # for num_models=3
+    # cps_loss_weight: 1.72  # for num_models=2
+    optimizer:
+    # Default optimizer is based on GCN model baseline setup
+      - _target_: torch.optim.AdamW
+        _partial_: true
+        lr: 0.01
+        weight_decay: 0.01
+    scheduler:
+    # Default scheduler is based on GCN model baseline setup
+      - _target_: torch.optim.lr_scheduler.StepLR
+        _partial_: true
+        step_size: 10
+        gamma: 0.9
+
+logger:
+  name: ${model.name}_${trainer.method}_${model.name}x${trainer.num_models}_fewsup${dataset.init.labeled_to_unlabeled_ratio}
+
+dataset:
+  init:
+    # Few-supervision:
+    # - Of the original split (80/10/10, and of the 80% train use 90/10 as labeled/unlabaled),
+    #   use just fraction of that 0.08 (0.8*0.1) labeled data
+    # -- Use just 1/2 labeled
+    splits: [0.86, 0.04, 0.1, 0.1]
+    labeled_to_unlabeled_ratio: 1
+    # # -- Use just 1/4 labeled
+    # splits: [0.88, 0.02, 0.1, 0.1]
+    # labeled_to_unlabeled_ratio: 0.33 # 1/3
+    # # -- Use just 1/8 labeled
+    # splits: [0.89, 0.01, 0.1, 0.1]
+    # labeled_to_unlabeled_ratio: 0.14 # 1/7

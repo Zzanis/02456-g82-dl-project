@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - override /model: gcn-graphconv
+  - override /trainer: supervised-ensemble
+
+trainer:
+  train:
+    total_epochs: 500
+  num_models: 1
+  init:
+    optimizer:
+      lr: 0.01
+      weight_decay: 0.005
+    scheduler:
+      step_size: 1
+      gamma: 0.975
+    gradient_clipping: false
+    early_stopping: false
+
+# TODO migcer: remove
+# logger:
+#     disable: true
+#   entity: miglec-n-a
+#   project_name: semi-supervised-ensembles

@@ -1,7 +1,10 @@
+import csv
 import os
 import pickle
 import random
 from itertools import chain
+from datetime import datetime
+from pathlib import Path
 from time import time
 
 import numpy as np
@@ -87,3 +90,16 @@ def save_results(results, log_dir):
     with open(f"{log_dir}/results_{t}_{r}.pkl", "wb") as f:
         pickle.dump(results, f)
     print(f"Saved results to {log_dir}/results_{t}_{r}.pkl")
+
+
+def save_results_dict(results: dict, res_dir: Path) -> None:
+    res_dir.mkdir(exist_ok=True)
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%f")
+    res_file_path = res_dir / f"results_{ts}.csv"
+
+    with open(res_file_path, "w") as f:
+        writer = csv.DictWriter(f, fieldnames=results.keys())
+        writer.writeheader()
+        writer.writerow(results)
+
+    print(f"Saved results to {res_file_path}")

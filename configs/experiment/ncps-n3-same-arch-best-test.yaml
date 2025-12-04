@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - ncps-n3-same-arch-best
+
+save_model: true
+save_model_filename: "best_gcn_ncps_ensemble_n3"
+run_test: true
+
+logger:
+  name: ${model.name}_${trainer.method}_n${trainer.num_models}_best_test_seed=${seed}

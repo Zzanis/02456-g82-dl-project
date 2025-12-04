@@ -1,0 +1,34 @@
+# @package _global_
+defaults:
+  - override /model: gcn-graphconv-ensemble
+  - override /trainer: n-cps
+
+trainer:
+  train:
+    total_epochs: 500
+  init:
+    optimizer:
+      # GCN optimizer
+      - _target_: torch.optim.AdamW
+        _partial_: true
+        lr: 0.01
+        weight_decay: 0.01
+      # GraphConv optimizer
+      - _target_: torch.optim.AdamW
+        _partial_: true
+        lr: 0.01
+        weight_decay: 0.005
+    scheduler:
+      # GCN scheduler
+      - _target_: torch.optim.lr_scheduler.StepLR
+        _partial_: true
+        step_size: 10
+        gamma: 0.9
+      # GraphConv scheduler
+      - _target_: torch.optim.lr_scheduler.StepLR
+        _partial_: true
+        step_size: 1
+        gamma: 0.975
+
+logger:
+  name: ${model.name}_${trainer.method}_${model.name}_w${trainer.init.cps_loss_weight}

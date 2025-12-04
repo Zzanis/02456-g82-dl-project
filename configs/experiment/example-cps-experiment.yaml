@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - override /trainer: semi-supervised-cps
+  # Override model
+  - override /model: gcn
+
+
+# Override other parameters here as needed:
+# trainer:
+  # init:
+  #   optimizer:
+  #     lr: 0.01
+  #     weight_decay: 0.005

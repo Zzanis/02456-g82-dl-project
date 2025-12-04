@@ -18,6 +18,7 @@ class QM9DataModule(pl.LightningDataModule):
         batch_size_inference: int = 32,
         num_workers: int = 0,
         splits: list[int] | list[float] = [0.72, 0.08, 0.1, 0.1],
+        labeled_to_unlabeled_ratio: float = 1,
         seed: int = 0,
         subset_size: int | None = None,
         data_augmentation: bool = False, # Unused but here for compatibility
@@ -32,6 +33,7 @@ class QM9DataModule(pl.LightningDataModule):
         self.batch_size_inference = batch_size_inference
         self.num_workers = num_workers
         self.splits = splits
+        self.labeled_to_unlabeled_ratio = labeled_to_unlabeled_ratio
         self.seed = seed
         self.subset_size = subset_size
         self.data_augmentaion = data_augmentation
@@ -78,16 +80,26 @@ class QM9DataModule(pl.LightningDataModule):
         self.data_val = dataset[split_idx[1]:split_idx[2]]
         self.data_test = dataset[split_idx[2]:]
 
-        # Set batch sizes. We want the labeled batch size to be the one given by the user, and the unlabeled one to be so that we have the same number of batches
+        # Set batch sizes:
+        # - Labeled batch size is set by the user
+        # - Unlabeled batch size is calculated from desired labeled/unlabeled batch ratio
         self.batch_size_train_labeled = self.batch_size_train
-        self.batch_size_train_unlabeled = self.batch_size_train
+        self.batch_size_train_unlabeled = int(self.batch_size_train_labeled / self.labeled_to_unlabeled_ratio)
+
+        ## Set batch sizes. We want the labeled batch size to be the one given by the user, and the unlabeled one to be so that we have the same number of batches
         #self.batch_size_train_unlabeled = int(
         #    self.batch_size_train * len(self.data_train_unlabeled) / len(self.data_train_labeled)
         #)
 
-        print(f"QM9 dataset loaded with {len(self.data_train_labeled)} labeled, {len(self.data_train_unlabeled)} unlabeled, "
-              f"{len(self.data_val)} validation, and {len(self.data_test)} test samples.")
-        print(f"Batch sizes: labeled={self.batch_size_train_labeled}, unlabeled={self.batch_size_train_unlabeled}")
+        print(
+            f"QM9 dataset loaded with {len(self.data_train_labeled)} labeled, "
+            f"{len(self.data_train_unlabeled)} unlabeled, "
+            f"{len(self.data_val)} validation, and {len(self.data_test)} test samples."
+        )
+        print(
+            f"Batch sizes: labeled={self.batch_size_train_labeled}, unlabeled={self.batch_size_train_unlabeled}, "
+            f"labeled to unlabeled batch size ratio: {self.labeled_to_unlabeled_ratio}"
+        )
 
     def train_dataloader(self, shuffle=True) -> DataLoader:
         return DataLoader(
