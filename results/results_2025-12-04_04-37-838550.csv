@@ -1,0 +1,2 @@
+test_MSE,model_name,trainer_method,num_models
+0.03158874410603728,gcn,n-cps,3
