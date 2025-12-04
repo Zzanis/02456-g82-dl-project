@@ -24,7 +24,7 @@ def prepare_data(train_dataset, train_size: int):
     return train_dataset, val_dataset, unlabbeled_dataset
 
 
-def create_loader(unsupervised_train_fraction=0.0):
+def create_loader(unsupervised_train_fraction=0.9):
     """Create data loader object.
 
     Returns: List of PyTorch data loaders

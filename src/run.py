@@ -111,6 +111,26 @@ def main(cfg: DictConfig) -> None:
     # print(model.parameters())
     # print(model.state_dict())
 
+    # if hasattr(trainer, "test"):
+    #     test_results = trainer.test()
+
+    #     print("\n==============================")
+    #     print("   FINAL TEST SET RESULTS")
+    #     print("==============================")
+    #     print(test_results)
+
+    #     # --- Log test results to W&B ---
+    #     if isinstance(test_results, dict):
+    #         logger.log_metrics(test_results, step=0)
+    #     elif isinstance(test_results, (list, tuple)) and isinstance(test_results[0], dict):
+    #         for d in test_results:
+    #             logger.log_metrics(d, step=0)
+    #     else:
+    #         print("WARNING: Test results could not be logged to wandb.")
+
+    # else:
+    #     print("WARNING: trainer has no .test() method")
+
 
 if __name__ == "__main__":
     main()

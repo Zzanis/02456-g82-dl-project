@@ -1,0 +1,13 @@
+Loaded dependency [python3/3.10.12]: sqlite3/3.42.0
+Loaded module: python3/3.10.12
+
+Loading python3/3.10.12
+  Loading requirement: sqlite3/3.42.0
+Loaded module: gcc/13.3.0-binutils-2.42
+Could not override 'train.lambda_max'.
+To append to your config use +train.lambda_max=0.001
+Key 'train' is not in struct
+    full_key: train
+    object_type=dict
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
