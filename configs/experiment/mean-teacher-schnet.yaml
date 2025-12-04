@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /model: schnet_model
+  - override /trainer: mean-teacher
+
+logger:
+  # entity: adopetr-danmarks-tekniske-universitet-dtu
+  project_name: "Meanest Teacher"

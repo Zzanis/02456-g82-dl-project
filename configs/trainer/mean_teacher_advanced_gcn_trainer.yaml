@@ -1,0 +1,38 @@
+defaults:
+  - _self_
+
+method: mean-teacher-advanced-gcn
+
+train:
+  total_epochs: 400
+  validation_interval: 10
+
+init:
+  _target_: trainer.MeanTeacher  # your SchNet trainer class
+  
+  lambda_max: 0.05
+  # model:
+  #   _target_: models.SchNetModel
+  #   hidden_channels: 128
+  #   num_filters: 128
+  #   num_interactions: 6
+  #   num_gaussians: 50
+  #   cutoff: 10.0
+
+  supervised_criterion:
+    _target_: torch.nn.MSELoss      # MAE loss for QM9
+
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.005
+    weight_decay: 0.01
+
+  scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: true
+    step_size: 10
+    gamma: 0.9
+
+# Optional: other trainer parameters can go here
+# e.g., wandb logging, mixed precision, early stopping

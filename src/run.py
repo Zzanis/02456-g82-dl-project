@@ -38,7 +38,7 @@ def main(cfg):
     dm = hydra.utils.instantiate(cfg.dataset.init)
 
     # Create ensemble of models
-    num_models = cfg.trainer.num_models
+    num_models = cfg.trainer.get("num_models", 1)
     models = []
 
     for i in range(num_models):
@@ -51,7 +51,9 @@ def main(cfg):
 
         models.append(gnn_model)
     
-    # Initialize the trainer with model, logger, data, and device
+    # cfg.trainer.init.lambda_max = cfg.trainer.train.lambda_max
+    # cfg.trainer.init.total_epochs = cfg.trainer.train.total_epochs
+    # # Initialize the trainer with model, logger, data, and device
     trainer = hydra.utils.instantiate(cfg.trainer.init, models=models, logger=logger, datamodule=dm, device=device)
 
     # Train the model and collect results
@@ -59,6 +61,25 @@ def main(cfg):
     if results is not None:
         results = torch.Tensor(results)
 
+    # if hasattr(trainer, "test"):
+    #     test_results = trainer.test()
+
+    #     print("\n==============================")
+    #     print("   FINAL TEST SET RESULTS")
+    #     print("==============================")
+    #     print(test_results)
+
+    #     # --- Log test results to W&B ---
+    #     if isinstance(test_results, dict):
+    #         logger.log_metrics(test_results, step=0)
+    #     elif isinstance(test_results, (list, tuple)) and isinstance(test_results[0], dict):
+    #         for d in test_results:
+    #             logger.log_metrics(d, step=0)
+    #     else:
+    #         print("WARNING: Test results could not be logged to wandb.")
+
+    # else:
+    #     print("WARNING: trainer has no .test() method")
 
 
 if __name__ == "__main__":
