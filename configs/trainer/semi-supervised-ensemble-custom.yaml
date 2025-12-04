@@ -4,7 +4,7 @@ defaults:
 method: semi-supervised-ensemble
 
 train:
-  total_epochs: 350
+  total_epochs: 400
   validation_interval: 10
   
 
@@ -12,20 +12,20 @@ train:
 init:
   _target_: trainer.SemiSupervisedEnsemble  # your SchNet trainer class
 
-  lambda_max: 0.01
+  lambda_max: 0.03
   supervised_criterion:
     _target_: torch.nn.MSELoss      # MAE loss for QM9
 
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.001
+    lr: 0.005
     weight_decay: 0.0001
 
   scheduler:
     _target_: torch.optim.lr_scheduler.CosineAnnealingLR
     _partial_: true
-    T_max: 350
+    T_max: 400
     eta_min: 1e-5
 
 # Optional: other trainer parameters can go here

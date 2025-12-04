@@ -34,10 +34,10 @@ class GraphSAGE(nn.Module):
     def __init__(
         self, 
         num_node_features, 
-        hidden_channels=256,  # increased width
-        num_layers=5,          # increased depth
+        hidden_channels=256,  
+        num_layers=5,          
         aggr='max', 
-        dropout=0.2            # slightly higher dropout for stability
+        dropout=0.2            
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -205,19 +205,19 @@ class advanced_GCN(torch.nn.Module):
         self.bn5 = torch.nn.BatchNorm1d(hidden_channels)
         
         # Optional: Layer normalization (alternative to batch norm)
-        # More stable for small batches or varying graph sizes
-        self.use_layer_norm = use_layer_norm
-        if use_layer_norm:
-            from torch_geometric.nn import LayerNorm
-            self.ln1 = LayerNorm(hidden_channels)
-            self.ln2 = LayerNorm(hidden_channels)
-            self.ln3 = LayerNorm(hidden_channels)
-            self.ln4 = LayerNorm(hidden_channels)
-            self.ln5 = LayerNorm(hidden_channels)
+        # # More stable for small batches or varying graph sizes
+        # self.use_layer_norm = use_layer_norm
+        # if use_layer_norm:
+        #     from torch_geometric.nn import LayerNorm
+        #     self.ln1 = LayerNorm(hidden_channels)
+        #     self.ln2 = LayerNorm(hidden_channels)
+        #     self.ln3 = LayerNorm(hidden_channels)
+        #     self.ln4 = LayerNorm(hidden_channels)
+        #     self.ln5 = LayerNorm(hidden_channels)
 
         self.use_graph_norm = use_graph_norm
         if use_graph_norm:
-            # from torch_geometric.nn import LayerNorm
+            
             self.ln1 = GraphNorm(hidden_channels)
             self.ln2 = GraphNorm(hidden_channels)
             self.ln3 = GraphNorm(hidden_channels)
@@ -313,3 +313,4 @@ class advanced_GCN(torch.nn.Module):
         x = self.linear(x)
 
         return x
+

@@ -107,6 +107,23 @@ class SemiSupervisedEnsemble:
                 val_losses.append(val_loss.item())
 
         return {"val_MSE": float(np.mean(val_losses))}
+    
+    def test(self):
+        models_to_eval = self.teacher_models if self.use_mean_teacher else self.models
+
+        for model in models_to_eval:
+            model.eval()
+
+        test_losses = []
+        with torch.no_grad():
+            for x, targets in self.test_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+                preds = [model(x) for model in models_to_eval]
+                avg_preds = torch.stack(preds).mean(0)
+                test_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+                test_losses.append(test_loss.item())
+
+        return {"test_MSE": float(np.mean(test_losses))}
 
     # def validate(self):
     #     for model in self.models:

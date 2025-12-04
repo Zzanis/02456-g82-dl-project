@@ -10,7 +10,7 @@ train:
 init:
   _target_: trainer.SemiSupervisedEnsemble  # your SchNet trainer class
   
-  lambda_max: 0.01
+  lambda_max: 0.05
   # model:
   #   _target_: models.SchNetModel
   #   hidden_channels: 128
@@ -25,7 +25,7 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.01
+    lr: 0.005
     weight_decay: 0.01
 
   scheduler:
