@@ -1,6 +1,6 @@
-# GNN Introduction
+# Semi Supervisde Learnings in GNN for Drug Discovery 
 
-This project provides an introduction to Graph Neural Networks (GNNs) using PyTorch and PyTorch Geometric on the dataset QM9.
+This project builds upon an existing semi-supervised Graph Neural Networks (GNNs) on the QM9 dataset using PyTorch and PyTorch Geometric from <[gnn_intro](https://github.com/tirsgaard/gnn_intro)>, extending it with semi-supervised training using established methods Mean Teacher and n-CPS.
 
 ## Installation
 
@@ -66,12 +66,5 @@ python src/run.py +experiment=my-experiment trainer.num_models=3
 ```
 
 
-## Improving the predictive accuracy
-There are many ways to improve the GNN. Please try to get the validation error (MSE) as low as possible. I have not implemented the code to run on the test data. That is for you to do, but please wait until you have the final model.
-Here are some great resources:
-- Try different GNN architectures and layers see (https://pytorch-geometric.readthedocs.io/en/latest/modules/nn.html)
-- Try different optimizers and schedulers
-- Tune hyperparameters (especially learning rate, layers, and hidden units)
-- Use advanced regularization techniques such as https://openreview.net/forum?id=xkljKdGe4E#discussion
-- You can try changing the generated features of the dataloader
+
 
