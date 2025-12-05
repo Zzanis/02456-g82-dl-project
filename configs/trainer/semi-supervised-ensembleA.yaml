@@ -1,0 +1,35 @@
+defaults:
+  - _self_
+
+method: semi-supervised-ensemble
+num_models: 3  # Number of models in the ensemble
+
+train:
+  total_epochs: 250
+  validation_interval: 10
+
+init:
+  _target_: trainer.SemiSupervisedEnsembleAdomas
+  supervised_criterion:
+    _target_: torch.nn.MSELoss
+  optimizer:
+    _target_: torch.optim.AdamW
+    _partial_: true
+    lr: 0.01
+    weight_decay: 0.01
+  scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR  #CosineAnnealingLR
+    _partial_: true
+    step_size: 10
+    gamma: 0.9
+  use_mean_teacher: True
+  ema_init: 0.95     # starting EMA decay
+  ema_target: 0.99    # final EMA decay
+  ema_ramp_epochs: 50   # epochs to ramp EMA from init->target
+  lambda_max: 0.01     # max unsupervised weight
+  lambda_ramp_epochs: 20 # epochs to ramp lambda_unsup 0->lambda_max
+  grad_clip:  1.0
+  #patience: 20  # Stop training after 20 validations without improvement
+  #min_delta: 0.001  # Minimum improvement to reset patience counter
+
+    

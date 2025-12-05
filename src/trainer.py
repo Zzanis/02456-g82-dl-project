@@ -9,6 +9,267 @@ from tqdm import tqdm
 from itertools import cycle
 
 
+class SemiSupervisedEnsembleAdomas:
+    def __init__(
+        self,
+        supervised_criterion,
+        optimizer,
+        scheduler,
+        device,
+        models,
+        logger,
+        datamodule,
+        use_mean_teacher,
+        ema_init,      # starting EMA decay
+        ema_target,    # final EMA decay
+        ema_ramp_epochs,   # epochs to ramp EMA from init->target
+        lambda_max,     # max unsupervised weight
+        lambda_ramp_epochs,# epochs to ramp lambda_unsup 0->lambda_max
+        grad_clip       # gradient clipping norm (None to disable)
+    ):
+        self.device = device
+        self.models = models
+
+        # Optim related things
+        self.supervised_criterion = supervised_criterion
+        all_params = [p for m in self.models for p in m.parameters()]
+        self.optimizer = optimizer(params=all_params)
+        self.scheduler = scheduler(optimizer=self.optimizer)
+
+        # Dataloaders (explicit)
+        self.supervised_loader = datamodule.train_dataloader()
+        self.unsupervised_loader = getattr(datamodule, "unsupervised_train_dataloader", lambda: None)()
+        self.val_dataloader = datamodule.val_dataloader()
+        self.test_dataloader = datamodule.test_dataloader()
+
+        # Logging
+        self.logger = logger
+
+        # Mean Teacher setup (optional)
+        self.use_mean_teacher = use_mean_teacher
+        # EMA ramp parameters
+        self.ema_init = ema_init
+        self.ema_target = ema_target
+        self.ema_ramp_epochs = ema_ramp_epochs
+        # unsup weight ramp
+        self.lambda_max = lambda_max
+        self.lambda_ramp_epochs = lambda_ramp_epochs
+        # grad clip
+        self.grad_clip = grad_clip
+
+        # initialize teachers if needed
+        if self.use_mean_teacher:
+            self.teacher_models = [deepcopy(m).to(self.device) for m in self.models]
+            
+            for t in self.teacher_models:
+                t.eval()
+                for p in t.parameters():
+                    p.requires_grad = False
+        else:
+            self.teacher_models = None
+
+        # global step counter (for optional fine control)
+        self.global_step = 0
+
+    def current_ema_decay(self, epoch):
+        """Linearly ramp EMA decay from ema_init -> ema_target over ema_ramp_epochs."""
+        if self.ema_ramp_epochs <= 0:
+            return self.ema_target
+        frac = min(1.0, epoch / float(self.ema_ramp_epochs))
+        return float(self.ema_init + frac * (self.ema_target - self.ema_init))
+
+    def current_lambda(self, epoch):
+        """Linearly ramp lambda_unsup from 0 -> lambda_max over lambda_ramp_epochs."""
+        if self.lambda_ramp_epochs <= 0:
+            return float(self.lambda_max)
+        frac = min(1.0, epoch / float(self.lambda_ramp_epochs))
+        return float(self.lambda_max * frac)
+
+    def update_teacher(self, current_decay):
+        """EMA update for each teacher from its student using given decay."""
+        if not self.use_mean_teacher:
+            return
+        for student, teacher in zip(self.models, self.teacher_models):
+            for p_s, p_t in zip(student.parameters(), teacher.parameters()):
+                p_t.data.mul_(current_decay).add_(p_s.data * (1.0 - current_decay))
+
+
+    # def validate(self):
+    #     models_to_eval = self.teacher_models if self.use_mean_teacher else self.models
+
+    #     for model in models_to_eval:
+    #         model.eval()
+
+    #     val_losses = []
+    #     with torch.no_grad():
+    #         for x, targets in self.val_dataloader:
+    #             x, targets = x.to(self.device), targets.to(self.device)
+    #             preds = [model(x) for model in models_to_eval]
+    #             avg_preds = torch.stack(preds).mean(0)
+    #             val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+    #             val_losses.append(val_loss.item())
+
+    #     return {"val_MSE": float(np.mean(val_losses))}
+
+    def validate(self):
+        
+        tmodel = self.teacher_models
+        smodel = self.models
+
+        for t in tmodel:
+            t.eval()
+        
+        for s in smodel:
+            s.eval()
+        val_losses_t = []
+        val_losses_s = []
+
+        with torch.no_grad():
+            for x, targets in self.val_dataloader:
+                x, targets = x.to(self.device), targets.to(self.device)
+
+                predsT = [t(x) for t in tmodel]
+                avg_predsT = torch.stack(predsT).mean(0)
+
+                val_lossT = torch.nn.functional.mse_loss(avg_predsT, targets)
+                val_losses_t.append(val_lossT.item())
+
+                predsS = [s(x) for s in smodel]
+                avg_predsS = torch.stack(predsS).mean(0)
+
+                val_lossS = torch.nn.functional.mse_loss(avg_predsS, targets)
+                val_losses_s.append(val_lossS.item())
+
+
+        val_lossT = float(np.mean(val_losses_t)) if val_losses_t else float("nan")
+        val_lossS = float(np.mean(val_losses_s)) if val_losses_s else float("nan")
+
+        return {"val_MSE_teacher": val_lossT, "val_MSE_student": val_lossS}
+    
+    # def validate(self):
+    #     for model in self.models:
+    #         model.eval()
+
+    #     val_losses = []
+    #     with torch.no_grad():
+    #         for x, targets in self.val_dataloader:
+    #             x, targets = x.to(self.device), targets.to(self.device)
+    #             preds = [model(x) for model in self.models]
+    #             avg_preds = torch.stack(preds).mean(0)
+    #             val_loss = torch.nn.functional.mse_loss(avg_preds, targets)
+    #             val_losses.append(val_loss.item())
+    #     return {"val_MSE": float(np.mean(val_losses))}
+
+
+
+    def train(self, total_epochs, validation_interval, lambda_unsup=None):
+        """
+        Paired-batch training with Mean Teacher stability improvements:
+        - linear ramp for lambda_unsup
+        - linear ramp for EMA decay (teacher)
+        - gradient clipping
+        - single combined update per paired iteration
+        """
+        # default lambda_unsup driven by ramp settings unless provided
+        if lambda_unsup is None:
+            lambda_unsup = self.lambda_max
+
+        sup_batches = len(self.supervised_loader)
+        unsup_exists = (self.unsupervised_loader is not None)
+        unsup_batches = len(self.unsupervised_loader) if unsup_exists else 0
+        print(f"Supervised batches: {sup_batches}, Unsupervised batches: {unsup_batches}")
+        print(next(self.teacher_models[0].parameters()).abs().mean())
+        print(next(self.models[0].parameters()).abs().mean())
+
+
+        for epoch in (pbar := tqdm(range(1, total_epochs + 1))):
+            # compute current ramped values
+            current_lambda = self.current_lambda(epoch)
+            ema_decay_now = self.current_ema_decay(epoch)
+
+            # set models
+            for model in self.models:
+                model.train()
+            if self.teacher_models:
+                for t in self.teacher_models:
+                    t.eval()
+
+            supervised_losses_logged = []
+            unsupervised_losses_logged = []
+
+            # cycle unsup loader so we always have one per sup batch
+            if unsup_exists and current_lambda > 0:
+                unsup_iter = cycle(self.unsupervised_loader)
+            else:
+                unsup_iter = None
+
+            for x_sup, y_sup in self.supervised_loader:
+                x_sup, y_sup = x_sup.to(self.device), y_sup.to(self.device)
+
+                if unsup_iter is not None:
+                    x_unsup, _ = next(unsup_iter)
+                    x_unsup = x_unsup.to(self.device)
+                else:
+                    x_unsup = None
+
+                # supervised loss
+                supervised_losses = [self.supervised_criterion(m(x_sup), y_sup) for m in self.models]
+                supervised_loss = torch.stack(supervised_losses).mean()
+
+                # unsupervised loss (teacher or student ensemble)
+                if (x_unsup is not None) and (current_lambda > 0):
+                    with torch.no_grad():
+                        if self.use_mean_teacher:
+                            teacher_preds = [t(x_unsup) for t in self.teacher_models]
+                            pseudo = torch.stack(teacher_preds).mean(0)
+                        else:
+                            student_preds = [m(x_unsup) for m in self.models]
+                            pseudo = torch.stack(student_preds).mean(0)
+                    unsup_losses = [torch.nn.functional.mse_loss(m(x_unsup), pseudo) for m in self.models]
+                    unsup_loss = torch.stack(unsup_losses).mean()
+                else:
+                    unsup_loss = None
+
+                # combined loss and step
+                total_loss = supervised_loss if unsup_loss is None else supervised_loss + current_lambda * unsup_loss
+
+                self.optimizer.zero_grad()
+                total_loss.backward()
+
+                # gradient clipping 
+                if (self.grad_clip is not None) and (self.grad_clip > 0):
+                    torch.nn.utils.clip_grad_norm_( [p for m in self.models for p in m.parameters() if p.grad is not None], self.grad_clip)
+
+                self.optimizer.step()
+                self.global_step += 1
+
+                # update EMA teacher with the current decay
+                if self.use_mean_teacher:
+                    self.update_teacher(ema_decay_now)
+
+                supervised_losses_logged.append(supervised_loss.item())
+                if unsup_loss is not None:
+                    unsupervised_losses_logged.append(unsup_loss.item())
+
+            # scheduler step per epoch
+            self.scheduler.step()
+
+            # logging & validation
+            summary_dict = {
+                # "epoch": epoch,
+                "supervised_loss": float(np.mean(supervised_losses_logged)) if supervised_losses_logged else 0.0,
+                "unsupervised_loss": float(np.mean(unsupervised_losses_logged)) if unsupervised_losses_logged else 0.0,
+                "lambda_unsup": float(current_lambda),
+                "ema_decay": float(ema_decay_now)
+            }
+
+            if epoch % validation_interval == 0 or epoch == total_epochs:
+                val_metrics = self.validate()
+                summary_dict.update(val_metrics)
+                pbar.set_postfix(summary_dict)
+
+            self.logger.log_dict(summary_dict, step=epoch)
+
 class SemiSupervisedMeanTeacher1to1:
     def __init__(
         self,
@@ -21,8 +282,10 @@ class SemiSupervisedMeanTeacher1to1:
         datamodule,
         ema_alpha_rampup,
         ema_alpha_final,
+        ema_ramp_epochs,
         consistency_weight,
         consistency_rampup_epochs,
+        
     ):
         self.device = device
         #laod models
@@ -48,6 +311,7 @@ class SemiSupervisedMeanTeacher1to1:
         #Ema + Consistency setup
         self.ema_alpha_rampup = ema_alpha_rampup
         self.ema_alpha_final = ema_alpha_final
+        self.ema_ramp_epochs = ema_ramp_epochs
         self.consistency_weight = consistency_weight
         self.consistency_rampup_epochs = consistency_rampup_epochs
 
@@ -74,12 +338,13 @@ class SemiSupervisedMeanTeacher1to1:
             return self.ema_alpha_final
 
         # frac in [0, 1]
-        frac = min(1.0, epoch / float(self.ema_alpha_rampup))
+        frac = min(1.0, epoch / float(self.ema_ramp_epochs))
         return float(
             self.ema_alpha_rampup
             + frac * (self.ema_alpha_final - self.ema_alpha_rampup)
         )
 
+    
     def _get_lambda_t(self, epoch: int, total_epochs: int) -> float:
         """weights for consistency loss ramp-up"""
        
@@ -87,13 +352,13 @@ class SemiSupervisedMeanTeacher1to1:
             return self.consistency_weight
         
         # classic Gaussian Ramp-up
-        #t = min(epoch / self.consistency_rampup_epochs, 1.0)
-        #ramp = float(1.0 - math.exp(-5.0 * t * t))
-        #return self.consistency_weight * ramp
+        t = min(epoch / self.consistency_rampup_epochs, 1.0)
+        ramp = float(1.0 - math.exp(-5.0 * t * t))
+        return self.consistency_weight * ramp
         # linear ramp
-
-        frac = min(1.0, epoch / float(self.consistency_rampup_epochs))
-        return float(self.consistency_weight * frac)
+        
+        #frac = min(1.0, epoch / float(self.consistency_rampup_epochs))
+        #return float(self.consistency_weight * frac)
     
     def _unpack_batch(self, batch):
         """Allows both (x, y) and PyG Batch with .y."""
@@ -157,22 +422,29 @@ class SemiSupervisedMeanTeacher1to1:
             
             unlabeled_iter = iter(self.unlabeled_dataloader)
             #labeled_iter = cycle(self.train_dataloader)
+            
 
             for batch_l in self.train_dataloader:
-                x_l, targets_l = self._unpack_batch(batch_l) 
-                x_l, targets_l = x_l.to(self.device), targets_l.to(self.device) 
-                # Get unlabeled batch 
+                
+                x_l, targets_l = self._unpack_batch(batch_l)
+                x_l, targets_l = x_l.to(self.device), targets_l.to(self.device)
+
                 try: 
                     batch_u = next(unlabeled_iter) 
                 except StopIteration: 
                     unlabeled_iter = iter(self.unlabeled_dataloader) 
-                    batch_u = next(unlabeled_iter) 
-                    
-                x_u, _ = self._unpack_batch(batch_u) 
-                x_u = x_u.to(self.device) 
-                self.optimizer.zero_grad() 
-                # --- Supervised Loss (labeled) --- 
-                sup_losses = [ self.supervised_criterion(student(x_l), targets_l) for student in self.students ] 
+                    batch_u = next(unlabeled_iter)
+
+                x_u, _ = self._unpack_batch(batch_u)
+                x_u = x_u.to(self.device)
+
+                self.optimizer.zero_grad()
+
+                # --- Supervised Loss (labeled) ---
+                sup_losses = [
+                    self.supervised_criterion(student(x_l), targets_l)
+                    for student in self.students
+                ]
                 sup_loss = sum(sup_losses)/ len(self.students)
                 supervised_losses_logged.append(sup_loss.detach().item())  # type: ignore
 
@@ -218,7 +490,6 @@ class SemiSupervisedMeanTeacher1to1:
                 pbar.set_postfix(summary_dict)
             self.logger.log_dict(summary_dict, step=epoch)
 
-
 class SemiSupervisedMeanTeacher1to1_allData:
     def __init__(
         self,
@@ -231,6 +502,7 @@ class SemiSupervisedMeanTeacher1to1_allData:
         datamodule,
         ema_alpha_rampup,
         ema_alpha_final,
+        ema_ramp_epochs,
         consistency_weight,
         consistency_rampup_epochs,
     ):
@@ -258,6 +530,7 @@ class SemiSupervisedMeanTeacher1to1_allData:
         #Ema + Consistency setup
         self.ema_alpha_rampup = ema_alpha_rampup
         self.ema_alpha_final = ema_alpha_final
+        self.ema_ramp_epochs = ema_ramp_epochs
         self.consistency_weight = consistency_weight
         self.consistency_rampup_epochs = consistency_rampup_epochs
 
@@ -284,7 +557,7 @@ class SemiSupervisedMeanTeacher1to1_allData:
             return self.ema_alpha_final
 
         # frac in [0, 1]
-        frac = min(1.0, epoch / float(self.ema_alpha_rampup))
+        frac = min(1.0, epoch / float(self.ema_ramp_epochs))
         return float(
             self.ema_alpha_rampup
             + frac * (self.ema_alpha_final - self.ema_alpha_rampup)
@@ -298,13 +571,13 @@ class SemiSupervisedMeanTeacher1to1_allData:
             return self.consistency_weight
         
         # classic Gaussian Ramp-up
-        #t = min(epoch / self.consistency_rampup_epochs, 1.0)
-        #ramp = float(1.0 - math.exp(-5.0 * t * t))
-        #return self.consistency_weight * ramp
+        t = min(epoch / self.consistency_rampup_epochs, 1.0)
+        ramp = float(1.0 - math.exp(-5.0 * t * t))
+        return self.consistency_weight * ramp
         # linear ramp
         
-        frac = min(1.0, epoch / float(self.consistency_rampup_epochs))
-        return float(self.consistency_weight * frac)
+        #frac = min(1.0, epoch / float(self.consistency_rampup_epochs))
+        #return float(self.consistency_weight * frac)
     
     def _unpack_batch(self, batch):
         """Allows both (x, y) and PyG Batch with .y."""
@@ -405,6 +678,7 @@ class SemiSupervisedMeanTeacher1to1_allData:
                 
                 loss = sup_loss + lambda_t * cons_loss
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_( [p for m in self.students for p in m.parameters() if p.grad is not None], 1.0)
                 self.optimizer.step()
 
                 # ema update
@@ -752,7 +1026,6 @@ class SemiSupervisedEnsemble:
                         print("Restored best model weights")
                     break
             self.logger.log_dict(summary_dict, step=epoch)
-
 
 class SemiSupervisedCPS:
     """

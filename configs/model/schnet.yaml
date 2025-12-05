@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+
+name: schnet_like
+
+init:
+  _target_: models.SchNetLikeModel
+  _partial_: false
+  num_node_features: 11        # number of node features, same as before
+  hidden_channels: 512   # hidden dimension
+  dropout: 0.15           # dropout rate

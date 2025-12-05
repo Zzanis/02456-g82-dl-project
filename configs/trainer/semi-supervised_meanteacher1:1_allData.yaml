@@ -15,7 +15,7 @@ init:
   optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.01
+    lr: 1e-3
     weight_decay: 0.01
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
@@ -24,7 +24,8 @@ init:
     gamma: 0.9
   ema_alpha_rampup: 0.95
   ema_alpha_final: 0.99
-  consistency_weight: 1e-4
+  ema_ramp_epochs: 50
+  consistency_weight: 1e-6
   consistency_rampup_epochs: 100 
 
     
