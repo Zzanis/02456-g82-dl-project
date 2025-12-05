@@ -399,7 +399,13 @@ class SemiSupervisedCPS:
 
 
 class NCrossPseudoSupervision:
-    """n-Cross Pseudo-Supervision trainer"""
+    """n-Cross Pseudo-Supervision trainer
+    
+    Note: In this implementaion the CPS loss is additionally scaled by 1/n, therefore
+    true CPS loss weight λ is λ = λ'/n, where n is number of models, and λ' is the
+    weight `cps_loss_weight` that is supplied to the trainer.
+    We are reporting the true λ, not λ'.
+    """
 
     def __init__(
         self,
@@ -543,6 +549,7 @@ class NCrossPseudoSupervision:
                 cps_labeled_loss_per_model = []
                 cps_unlabeled_loss_per_model = []
                 for i in range(len(self.models)):
+                    # 1/(n-1) * MSE(y^_i, y^_j)
                     model_cps_labeled_loss = torch.stack(
                         [
                             self.supervised_criterion(
@@ -561,6 +568,7 @@ class NCrossPseudoSupervision:
                     ).mean()
                     cps_labeled_loss_per_model.append(model_cps_labeled_loss)
                     cps_unlabeled_loss_per_model.append(model_cps_unlabeled_loss)
+                # This should have been sum, now I get 1/(n-1) and then scale by 1/n again
                 cps_labeled_loss = torch.stack(cps_labeled_loss_per_model).mean()
                 cps_unlabeled_loss = torch.stack(cps_unlabeled_loss_per_model).mean()
                 cps_loss = cps_labeled_loss + cps_unlabeled_loss
