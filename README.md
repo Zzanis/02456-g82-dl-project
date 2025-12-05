@@ -1,6 +1,6 @@
 # Semi Supervisde Learnings in GNN for Drug Discovery 
 
-This project builds upon an existing semi-supervised Graph Neural Networks (GNNs) on the QM9 dataset using PyTorch and PyTorch Geometric from <[gnn_intro](https://github.com/tirsgaard/gnn_intro)>, extending it with semi-supervised training using established methods Mean Teacher and n-CPS.
+This project builds upon an existing semi-supervised Graph Neural Networks (GNNs) on the QM9 dataset using PyTorch and PyTorch Geometric from [gnn_intro](https://github.com/tirsgaard/gnn_intro), extending it with semi-supervised training using established methods Mean Teacher and n-CPS.
 
 ## Installation
 
